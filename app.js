@@ -132,6 +132,7 @@ app.use(
 
     if (error) {
       logger.error("Error while retrieving user data for admin: " + error)
+      logger.error("Redirecting to /security/logout, modactuel: " + modactuel)
       console.log("Error while retrieving user data for admin: " + error)
       res.redirect("/security/logout")
     }

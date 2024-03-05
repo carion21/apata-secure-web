@@ -1,0 +1,104 @@
+<div class="row">
+
+  <% for (s of signals) { %>
+    <div class="col-md-3">
+      <div class="card widget-flat <% if (!s.is_valid) { %>alert alert-secondary<% } %>">
+        <div class="card-body">
+          <div class="float-end">
+            <% if (s.is_valid) { %>
+              <i class="mdi mdi-check-outline alert alert-primary"></i>
+            <% } else { %>
+              <i class="mdi mdi-x-outline alert alert-secondary">X</i>
+            <% } %>
+          </div>
+          <h5 class="text-muted fw-normal mt-0" title="Number of Customers">
+            Opportunité sur
+            <b>
+              _<%= s.timeframe %>_
+            </b>
+          </h5>
+          <h3 class="mt-3 mb-3">
+            <%= s.symbol %>
+          </h3>
+          <p class="mb-0 text-muted">
+            <% if (s.decision == "BUY") { %>
+              <span class="text-success me-2">
+                <i class="mdi mdi-arrow-up-bold"></i>
+                <%= s.decision %>
+              </span>
+            <% } %>
+            <% if (s.decision == "SELL") { %>
+              <span class="text-danger me-2">
+                <i class="mdi mdi-arrow-down-bold"></i>
+                <%= s.decision %>
+              </span>
+            <% } %>
+            <span class="text-nowrap float-end">
+              <%= moment(s.date_created).add(-1, 'hours').format('DD/MM/YYYY HH:mm') %>
+            </span>
+          </p>
+          <hr class="my-1">
+          <p class="mb-0 text-muted">
+            <span class="text-nowrap float-start">
+              <%= s.code %>
+            </span>
+            <span class="text-nowrap float-end">
+              <!-- Center modal -->
+
+              <% if (s.is_valid) { %>
+                <button type="button" class="btn btn-outline-primary" 
+                  data-bs-toggle="modal" data-bs-target="#<%= s.code %>">
+                  Center modal
+                </button>
+                <span class="text-primary">
+                  Valide
+                </span>
+              <% } else { %>
+                <button type="button" class="btn btn-outline-secondary" 
+                  data-bs-toggle="modal" data-bs-target="#<%= s.code %>">
+                  Center modal
+                </button>
+                <span class="text-secondary">
+                  Non valide
+                </span>
+              <% } %>
+
+              <div class="modal fade" id="<%= s.code %>" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myCenterModalLabel">Center modal</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+                        </div>
+                        <div class="modal-body">
+                            ...
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+              </div><!-- /.modal -->
+
+              <% if (s.is_valid) { %>
+                <button type="button" class="btn btn-outline-primary" 
+                  data-bs-toggle="modal" data-bs-target="#<%= s.code %>">
+                  Center modal
+                </button>
+                <span class="text-primary">
+                  Valide
+                </span>
+              <% } else { %>
+                <button type="button" class="btn btn-outline-secondary" 
+                  data-bs-toggle="modal" data-bs-target="#<%= s.code %>">
+                  Center modal
+                </button>
+                <span class="text-secondary">
+                  Non valide
+                </span>
+              <% } %>
+            </span>
+          </p>
+        </div> <!-- end card-body-->
+      </div> <!-- end card-->
+    </div> <!-- end col-->
+  <% } %>
+
+</div>

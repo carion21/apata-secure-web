@@ -1,0 +1,90 @@
+<% extend('../base_admin') %>
+
+  <!-- Password -->
+  <h2 class="h5 text-primary mb-4">
+    Changer le mot de passe
+  </h2>
+  <form class="needs-validation border-bottom pb-3 pb-lg-4"
+    action="<%= routedebase %>/user_management/security"
+    method="POST"
+    novalidate>
+
+    <% if (locals.error) { %>
+      <div class="alert alert-danger">
+        <strong>Erreur!</strong> <%= locals.error %>
+      </div>
+    <% } %>
+
+    <div class="row">
+      <div class="alert alert-warning">
+        <strong>Attention!</strong> Vous serez déconnecté après avoir changé votre mot de passe.
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-6 mb-4">
+        <label for="cp" class="form-label fs-base">
+          Mot de passe actuel
+        </label>
+        <div class="password-toggle">
+          <input type="password" id="cp" class="form-control form-control-lg"
+            name="current_password"
+            value="<% if (locals.rbody) { %><%= rbody.current_password %><% } %>"
+            required>
+          <label class="password-toggle-btn" aria-label="Show/hide password">
+            <input class="password-toggle-check" type="checkbox">
+            <span class="password-toggle-indicator"></span>
+          </label>
+          <div class="invalid-tooltip position-absolute top-100 start-0">
+            Mot de passe incorrect!
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row pb-2">
+      <div class="col-sm-6 mb-4">
+        <label for="np" class="form-label fs-base">
+          Nouveau mot de passe
+        </label>
+        <div class="password-toggle">
+          <input type="password" id="np" class="form-control form-control-lg"
+            name="new_password"
+            value="<% if (locals.rbody) { %><%= rbody.new_password %><% } %>"
+            required>
+          <label class="password-toggle-btn" aria-label="Show/hide password">
+            <input class="password-toggle-check" type="checkbox">
+            <span class="password-toggle-indicator"></span>
+          </label>
+          <div class="invalid-tooltip position-absolute top-100 start-0">
+            Mot de passe incorrect!
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 mb-4">
+        <label for="cnp" class="form-label fs-base">
+          Confirmer le nouveau mot de passe
+        </label>
+        <div class="password-toggle">
+          <input type="password" id="cnp" class="form-control form-control-lg"
+            name="confirm_new_password"
+            value="<% if (locals.rbody) { %><%= rbody.confirm_new_password %><% } %>"
+            required>
+          <label class="password-toggle-btn" aria-label="Show/hide password">
+            <input class="password-toggle-check" type="checkbox">
+            <span class="password-toggle-indicator"></span>
+          </label>
+          <div class="invalid-tooltip position-absolute top-100 start-0">
+            Mot de passe incorrect!
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex mb-3">
+      <button type="reset" class="btn btn-secondary me-3">
+        Annuler
+      </button>
+      <button type="submit" class="btn btn-primary">
+        Sauvegarder le mot de passe
+      </button>
+    </div>
+  </form>

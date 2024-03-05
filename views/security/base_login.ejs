@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<%- include('../base/auth/head') %>
+
+<!-- Body -->
+
+<body>
+
+  <!-- Google Tag Manager (noscript)-->
+  <noscript>
+    <iframe src="http://www.googletagmanager.com/ns.html?id=GTM-WKV3GT5" height="0" width="0" style="display: none; visibility: hidden;"></iframe>
+  </noscript>
+
+  <!-- Page loading spinner -->
+  <%- include('../base/auth/loader') %>
+
+  <!-- Page wrapper for sticky footer -->
+  <!-- Wraps everything except footer to push footer to the bottom of the page if there is little content -->
+  <main class="page-wrapper">
+
+    <!-- Navbar -->
+      <!-- Remove "fixed-top" class to make navigation bar scrollable with the page -->
+      <header class="header navbar navbar-expand-lg position-absolute navbar-sticky">
+        <div class="container px-3">
+          <a href="/" class="navbar-brand pe-3">
+            <img src="/templates/assets/img/logo.svg" width="47" alt="Silicon">
+            <%= appName %>
+          </a>
+          <div class="form-check form-switch mode-switch pe-lg-1 ms-auto me-4" data-bs-toggle="mode">
+            <input type="checkbox" class="form-check-input" id="theme-mode">
+            <label class="form-check-label d-none d-sm-block" for="theme-mode">Light</label>
+            <label class="form-check-label d-none d-sm-block" for="theme-mode">Dark</label>
+          </div>
+        </div>
+      </header>
+
+    <!-- Page content -->
+    <%- content -%>
+
+  </main>
+
+
+  <!-- Back to top button -->
+  <a href="#top" class="btn-scroll-top" data-scroll>
+    <span class="btn-scroll-top-tooltip text-muted fs-sm me-2">Top</span>
+    <i class="btn-scroll-top-icon bx bx-chevron-up"></i>
+  </a>
+
+
+  <%- include('../base/auth/script') %>
+</body>
+
+</html>

@@ -1,0 +1,44 @@
+<div class="row">
+  <div class="col-12">
+    <div class="float-end">
+      <div class="d-flex">
+        <a href="<%= routedebase %>/signal_management/<%= template %>/1" class="btn btn-primary ms-2
+          <% if (ipage == 1) { %>disabled<% } %>">
+          <i class="mdi mdi-chevron-double-left"></i>
+        </a>
+        <% if (locals.total_pages > 3) { %>
+          <% if (ipage == 1) { %>
+            <% var jpage = 2 %>
+          <% } else if (ipage == total_pages) { %>
+              <% var jpage = ipage - 1 %>
+          <% } else { %>
+            <% var jpage = ipage %>
+          <% } %>
+          <a href="<%= routedebase %>/signal_management/<%= template %>/<%= jpage - 1 %>"
+            class="btn btn-primary ms-2
+            <% if (ipage == jpage - 1) { %>active<% } %>">
+            <%= jpage - 1 %>
+          </a>
+          <a href="<%= routedebase %>/signal_management/<%= template %>/<%= jpage %>" class="btn btn-primary ms-2
+            <% if (ipage == jpage) { %>active<% } %>">
+            <%= jpage %>
+          </a>
+          <a href="<%= routedebase %>/signal_management/<%= template %>/<%= jpage + 1 %>" class="btn btn-primary ms-2
+            <% if (ipage == total_pages) { %>active<% } %>">
+            <%= jpage + 1 %>
+          </a>
+        <% } else { %>
+          <% for (let i = 1; i <= locals.total_pages; i++) { %>
+            <a href="<%= routedebase %>/signal_management/<%= template %>/<%= i %>" class="btn btn-primary ms-2"
+              <%= i %>
+            </a>
+          <% } %>
+        <% } %>
+        <a href="<%= routedebase %>/signal_management/<%= template %>/<%= total_pages %>" class="btn btn-primary ms-1
+          <% if (ipage == total_pages) { %>disabled<% } %>">
+          <i class="mdi mdi-chevron-double-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,43 @@
+<% extend('../base_admin') %>
+
+<hr class="my-2">
+<h2 class="h5 text-primary mb-4">
+  Veuillez joindre le document que vous souhaitez ajouter
+</h2>
+
+<div class="alert alert-warning">
+  <strong>Attention!</strong> Votre document doit être au format PDF. Ce document se verra apposer un QR code qui sera son identifiant unique.
+</div>
+
+<form method="post" action="<%= routedebase %>/document_management/new_document"
+  enctype="multipart/form-data"
+  class="needs-validation border-bottom pb-3 pb-lg-4" novalidate>
+
+  <% if (locals.error) { %>
+    <div class="alert alert-danger">
+      <strong>Erreur!</strong> <%= locals.error %>
+    </div>
+  <% } %>
+
+  <div class="row pb-2">
+    <div class="col-sm-12 mb-2">
+      <label for="fl-textarea" class="form-label fs-base">
+        <span class="text-danger">*</span>
+        Document
+      </label>
+      <input class="form-control form-control-lg" id="formFileLg" type="file"
+        accept=".pdf"
+        max-size="10MB" name="document" required>
+    </div>
+  </div>
+
+  <div class="d-flex mb-3">
+    <a class="btn btn-secondary me-3"
+      href="<%= routedebase %>/document_management/new_document">
+      Retour
+    </a>
+    <button type="submit" class="btn btn-primary">
+      Je confirme
+    </button>
+  </div>
+</form>

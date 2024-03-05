@@ -27,7 +27,7 @@ const myFormat = printf(({ level, message, label, timestamp }) => {
 
 const logger = winston.createLogger({
   format: combine(
-    label({ label: "RXT" }),
+    label({ label: "APS" }),
     timestamp(),
     myFormat
   ),

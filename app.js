@@ -96,46 +96,46 @@ if (modactuel == "development") {
 }
 
 
-app.use(
-  '/admin',
-  (req, res, next) => {
-    console.log("__AdminController________________________________")
-    next()
-  }, AdminController
-)
-
-
 // app.use(
 //   '/admin',
-//   async (req, res, next) => {
+//   (req, res, next) => {
 //     console.log("__AdminController________________________________")
-//     let error = ""
-//     if (req.session.userdata) {
-//       let r_dts_user = await directus_retrieve_user(req.session.userdata.phone)
-
-//       if (r_dts_user.success) {
-//         let user_data = r_dts_user.data
-
-//         if (user_data.profile == USERPROFILE_TYPE_ADMIN && user_data.status) {
-//           next()
-//         } else {
-//           error = "Vous n'êtes pas autorisé à accéder à cette page."
-//         }
-
-//       } else {
-//         error = r_dts_user.message
-//       }
-
-//     } else {
-//       error = "Votre session a expirée."
-//     }
-
-//     if (error) {
-//       console.log("Error while retrieving user data for admin: " + error)
-//       res.redirect("/security/logout")
-//     }
+//     next()
 //   }, AdminController
 // )
+
+
+app.use(
+  '/admin',
+  async (req, res, next) => {
+    console.log("__AdminController________________________________")
+    let error = ""
+    if (req.session.userdata) {
+      let r_dts_user = await directus_retrieve_user(req.session.userdata.email)
+
+      if (r_dts_user.success) {
+        let user_data = r_dts_user.data
+
+        if (user_data.profile == USERPROFILE_TYPE_ADMIN && user_data.status) {
+          next()
+        } else {
+          error = "Vous n'êtes pas autorisé à accéder à cette page."
+        }
+
+      } else {
+        error = r_dts_user.message
+      }
+
+    } else {
+      error = "Votre session a expirée."
+    }
+
+    if (error) {
+      console.log("Error while retrieving user data for admin: " + error)
+      res.redirect("/security/logout")
+    }
+  }, AdminController
+)
 
 app.use(
   '/',

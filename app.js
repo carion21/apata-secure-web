@@ -131,6 +131,7 @@ app.use(
     }
 
     if (error) {
+      logger.error("Error while retrieving user data for admin: " + error)
       console.log("Error while retrieving user data for admin: " + error)
       res.redirect("/security/logout")
     }

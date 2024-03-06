@@ -64,7 +64,7 @@ const secret_prod = "Ba3wgQyXr5YP2CdSbzUAHt7ncxKsqp"
 const age = 12 * 60 * 60 * 1000 // 48 hours
 const modactuel = process.env.NODE_ENV || 'development'
 
-if (modactuel == "development") {
+if (modactuel !== "development") {
   const client = redis.createClient()
   app.use(session({
     secret: secret_dev,
@@ -89,7 +89,7 @@ if (modactuel == "development") {
     resave: true,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: false,
       maxAge: age
     }
   }));

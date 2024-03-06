@@ -4,6 +4,10 @@ const { isString, isInteger, isBoolean, isObject, isArray, isNumber, isArrayOfSt
 const axios = require('axios');
 const validator = require('email-validator');
 
+const { PDFDocument, rgb } = require('pdf-lib');
+const qr = require('qr-image');
+const fs = require('fs');
+
 const urlapi = getDirectusUrl();
 const moment = getMoment()
 
@@ -297,6 +301,40 @@ const generate_qr_code = (async (data) => {
   return result
 })
 
+const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath) => {
+  // Charger le PDF
+  const pdfBytes = await fs.promises.readFile(pdfPath);
+
+  // Créer un nouveau document PDF
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pages = pdfDoc.getPages();
+
+  // Créer le code QR
+  // const qr_png = qr.imageSync(qrCodeText, { type: 'png' });
+  // console.log(qr_png);
+  const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
+
+  // Parcourir chaque page du PDF
+  for (let i = 0; i < pages.length; i++) {
+      const { width, height } = pages[i].getSize();
+      const qrCodeSize = 50; // Taille du code QR
+      const x = width - qrCodeSize - 10; // 20 pixels de marge depuis le bord droit
+      const y = 10; // 20 pixels de marge depuis le bord supérieur
+
+      // Ajouter le code QR à la page
+      pages[i].drawImage(qrImage, {
+          x,
+          y,
+          width: qrCodeSize,
+          height: qrCodeSize,
+      });
+  }
+
+  // Écrire le fichier PDF de sortie
+  const modifiedPdfBytes = await pdfDoc.save();
+  await fs.promises.writeFile(outputPath, modifiedPdfBytes);
+})
+
 const directus_retrieve_user = (async (username) => {
   let result = {
     success: false
@@ -466,7 +504,7 @@ const directus_list_documents = (async (filters) => {
 
   let error = ""
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=id&filter[status][_eq]=true"
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[status][_eq]=true"
   urlcomplete += "&fields[]=*,user.*"
   try {
     let response = await axios.get(urlcomplete)
@@ -581,6 +619,7 @@ const directus_create_client = (async (client_data) => {
 module.exports = {
   control_service_data,
   generate_qr_code,
+  add_qr_code_to_pdf,
   directus_retrieve_user,
   directus_update_user,
   directus_verify_hash,

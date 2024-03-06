@@ -4,7 +4,7 @@ const axios = require('axios');
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode } = require('../../../config/utils');
 const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
-const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code } = require('../../../config/global_functions');
+const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf } = require('../../../config/global_functions');
 const router = express.Router();
 
 const urlapi = getDirectusUrl();
@@ -119,11 +119,25 @@ router.post('/', async function (req, res, next) {
 
       if (r_gen_qrcode.success) {
 
+        // get buffer from qrcode link
+        let buff = await axios.get(r_gen_qrcode.link, {
+          responseType: 'arraybuffer'
+        })
+
+        let inputFile = fileName
+        let outputFile = "secure-" + fileName.replace("document-", "")
+        add_qr_code_to_pdf(
+          "public/uploads/" + inputFile,
+          buff.data,
+          doc_code,
+          "public/uploads/" + outputFile
+        )
+
         let doc_data = {
           code: doc_code,
           user: req.session.userdata.id,
-          input_path: fileName,
-          output_path: fileName,
+          input_path: inputFile,
+          output_path: outputFile,
           qrcode_link: r_gen_qrcode.link,
           created_at: creation_date
         }

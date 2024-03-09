@@ -11,6 +11,7 @@ const winston = require('winston');
 const fs = require('fs');
 
 const HomeController = require('./controllers/HomeController');
+const ApiController = require('./controllers/ApiController');
 const AdminController = require('./controllers/AdminController');
 const SecurityController = require('./controllers/SecurityController');
 const { APP_NAME, APP_DESCRIPTION, USERPROFILE_TYPE_CLIENT, APP_VERSION, USERPROFILE_TYPE_ADMIN } = require('./config/consts');
@@ -145,6 +146,14 @@ app.use(
     console.log("__HomeController________________________________")
     next()
   }, HomeController
+)
+
+app.use(
+  '/api',
+  (req, res, next) => {
+    console.log("__ApiController________________________________")
+    next()
+  }, ApiController
 )
 
 app.use(

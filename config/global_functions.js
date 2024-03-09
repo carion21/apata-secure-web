@@ -1,12 +1,15 @@
-const { SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE,  } = require("./consts")
+const { SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, } = require("./consts")
 const { isString, isInteger, isBoolean, isObject, isArray, isNumber, isArrayOfString, isArrayOfInteger, getMoment, getDirectusUrl, genUserCode } = require("./utils")
 
 const axios = require('axios');
 const validator = require('email-validator');
 
 const { PDFDocument, rgb } = require('pdf-lib');
-const qr = require('qr-image');
+const { degrees } = require('pdf-lib').degrees;
+const { Image } = require('pdf-lib');
 const fs = require('fs');
+const path = require('path');
+const qr = require('qr-image');
 
 const urlapi = getDirectusUrl();
 const moment = getMoment()
@@ -301,13 +304,69 @@ const generate_qr_code = (async (data) => {
   return result
 })
 
+const convertImageToPdf = (async (imagePath, pdfPath) => {
+	// Read the image file asynchronously.
+	const image = await fs.promises.readFile(imagePath);
+
+	// Create a new PDF document.
+	const pdfDoc = await PDFDocument.create();
+
+	// Embed the image into the PDF document.
+	const imageEmbed = await pdfDoc.embedJpg(image);
+
+  const page = pdfDoc.addPage([imageEmbed.width, imageEmbed.height]);
+
+	// Scale the image to fit within the page dimensions while preserving aspect ratio.
+	const { width, height } = imageEmbed.scaleToFit(
+		page.getWidth(),
+		page.getHeight()
+	);
+
+	// Draw the image on the PDF page.
+	page.drawImage(imageEmbed, {
+		x: page.getWidth() / 2 - width / 2, // Center the image horizontally.
+		y: page.getHeight() / 2 - height / 2, // Center the image vertically.
+		width,
+		height,
+		color: rgb(0, 0, 0), // Set the image color to black.
+	});
+
+	// Save the PDF document as bytes.
+	const pdfBytes = await pdfDoc.save();
+
+	// Write the PDF bytes to a file asynchronously.
+	await fs.promises.writeFile(pdfPath, pdfBytes);
+  // remove the image file
+  await fs.promises.unlink(imagePath);
+});
+
 const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath) => {
   // Charger le PDF
   const pdfBytes = await fs.promises.readFile(pdfPath);
 
-  // Créer un nouveau document PDF
-  const pdfDoc = await PDFDocument.load(pdfBytes);
-  const pages = pdfDoc.getPages();
+  let pages = []
+  let pdfDoc = null
+
+  const extension = pdfPath.split('.').pop()
+  if (['png', 'jpg', 'jpeg'].includes(extension)) {
+    // convert image to pdf
+
+    const imageBytes = fs.readFileSync(pdfPath);
+    console.log(imageBytes);
+    // pdfDoc = await PDFDocument.create();
+    // const image = await pdfDoc.embedPng(imageBytes);
+    // console.log(image.width, image.height);
+    // const page = pdfDoc.addPage([image.width, image.height]);
+    // page.drawImage(image, {
+    //   x: 0,
+    //   y: 0,
+    // });
+    // pages = pdfDoc.getPages();
+  } else {
+    // Créer un nouveau document PDF
+    pdfDoc = await PDFDocument.load(pdfBytes);
+    pages = pdfDoc.getPages();
+  }
 
   // Créer le code QR
   // const qr_png = qr.imageSync(qrCodeText, { type: 'png' });
@@ -316,18 +375,18 @@ const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath
 
   // Parcourir chaque page du PDF
   for (let i = 0; i < pages.length; i++) {
-      const { width, height } = pages[i].getSize();
-      const qrCodeSize = 50; // Taille du code QR
-      const x = width - qrCodeSize - 10; // 20 pixels de marge depuis le bord droit
-      const y = 10; // 20 pixels de marge depuis le bord supérieur
+    const { width, height } = pages[i].getSize();
+    const qrCodeSize = 50; // Taille du code QR
+    const x = width - qrCodeSize - 10; // 20 pixels de marge depuis le bord droit
+    const y = 10; // 20 pixels de marge depuis le bord supérieur
 
-      // Ajouter le code QR à la page
-      pages[i].drawImage(qrImage, {
-          x,
-          y,
-          width: qrCodeSize,
-          height: qrCodeSize,
-      });
+    // Ajouter le code QR à la page
+    pages[i].drawImage(qrImage, {
+      x,
+      y,
+      width: qrCodeSize,
+      height: qrCodeSize,
+    });
   }
 
   // Écrire le fichier PDF de sortie
@@ -618,6 +677,7 @@ const directus_create_client = (async (client_data) => {
 
 module.exports = {
   control_service_data,
+  convertImageToPdf,
   generate_qr_code,
   add_qr_code_to_pdf,
   directus_retrieve_user,

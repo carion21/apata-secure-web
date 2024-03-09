@@ -4,7 +4,7 @@ const axios = require('axios');
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode } = require('../../../config/utils');
 const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
-const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf } = require('../../../config/global_functions');
+const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf, convertImageToPdf } = require('../../../config/global_functions');
 const router = express.Router();
 
 const urlapi = getDirectusUrl();
@@ -25,6 +25,7 @@ activeSidebare(tabside[idbloc].elements, index)
 
 const multer = require("multer");
 const path = require("path");
+const { log } = require('console');
 
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -32,7 +33,7 @@ var storage = multer.diskStorage({
     cb(null, "public/uploads");
   },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + "-" + Date.now() + ".pdf");
+    cb(null, file.fieldname + "-" + Date.now() + "." + file.originalname.split('.').pop());
   },
 });
 
@@ -45,14 +46,13 @@ var upload = multer({
   limits: { fileSize: maxSize },
   fileFilter: function (req, file, cb) {
     // Set the filetypes, it is optional
-    var filetypes = /pdf/;
-    var mimetype = filetypes.test(file.mimetype);
+    var filetypes = /pdf|jpeg|jpg|png/;
 
     var extname = filetypes.test(
       path.extname(file.originalname).toLowerCase()
     );
 
-    if (mimetype && extname) {
+    if (extname) {
       return cb(null, true);
     }
 
@@ -81,7 +81,16 @@ router.post('/:id', async function (req, res, next) {
         error = err.toString()
         result.message = error
       } else {
-        const fileName = req.file.filename
+        let fileName = req.file.filename
+
+        const fileExtension = fileName.split('.').pop()
+
+        console.log(fileName);
+
+        if (fileExtension != "pdf") {
+          await convertImageToPdf("public/uploads/" + fileName, "public/uploads/" + fileName.replace(fileExtension, "pdf"))
+        }
+        fileName = fileName.replace(fileExtension, "pdf")
 
         let creation_date = moment().format("YYYY-MM-DD HH:mm:ss")
         let doc_code = genDocumentCode()
@@ -92,7 +101,7 @@ router.post('/:id', async function (req, res, next) {
 
         if (r_gen_qrcode.success) {
 
-          // get buffer from qrcode link
+            // get buffer from qrcode link
           let buff = await axios.get(r_gen_qrcode.link, {
             responseType: 'arraybuffer'
           })

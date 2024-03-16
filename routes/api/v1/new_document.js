@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 
-const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode } = require('../../../config/utils');
+const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode, generateHash } = require('../../../config/utils');
 const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
 const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf, convertImageToPdf } = require('../../../config/global_functions');
@@ -99,6 +99,8 @@ router.post('/:id', async function (req, res, next) {
           stringdata: doc_code
         })
 
+        console.log(r_gen_qrcode);
+
         if (r_gen_qrcode.success) {
 
             // get buffer from qrcode link
@@ -106,33 +108,39 @@ router.post('/:id', async function (req, res, next) {
             responseType: 'arraybuffer'
           })
 
-          let inputFile = fileName
-          let outputFile = "secure-" + fileName.replace("document-", "")
-          add_qr_code_to_pdf(
-            "public/uploads/" + inputFile,
-            buff.data,
-            doc_code,
-            "public/uploads/" + outputFile
-          )
+          const hash  = generateHash(buff)
 
-          let doc_data = {
-            code: doc_code,
-            user: parseInt(id),
-            input_path: inputFile,
-            output_path: outputFile,
-            qrcode_link: r_gen_qrcode.link,
-            created_at: creation_date
-          }
+          result.success = true
+          result.message = "Document created"
+          result.hash = hash
 
-          let r_dts_new_document = await directus_create_document(doc_data)
+          // let inputFile = fileName
+          // let outputFile = "secure-" + fileName.replace("document-", "")
+          // add_qr_code_to_pdf(
+          //   "public/uploads/" + inputFile,
+          //   buff.data,
+          //   doc_code,
+          //   "public/uploads/" + outputFile
+          // )
 
-          if (r_dts_new_document.success) {
-            result.success = true
-            result.message = "Document created"
-          } else {
-            error = r_dts_new_document.message
-            result.message = error
-          }
+          // let doc_data = {
+          //   code: doc_code,
+          //   user: parseInt(id),
+          //   input_path: inputFile,
+          //   output_path: outputFile,
+          //   qrcode_link: r_gen_qrcode.link,
+          //   created_at: creation_date
+          // }
+
+          // let r_dts_new_document = await directus_create_document(doc_data)
+
+          // if (r_dts_new_document.success) {
+          //   result.success = true
+          //   result.message = "Document created"
+          // } else {
+          //   error = r_dts_new_document.message
+          //   result.message = error
+          // }
 
         } else {
           error = r_gen_qrcode.message

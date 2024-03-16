@@ -26,28 +26,28 @@ const myFormat = printf(({ level, message, label, timestamp }) => {
   return `${timestamp} [${label}] ${level}: ${message}`;
 });
 
-const logger = winston.createLogger({
-  format: combine(
-    label({ label: "APS" }),
-    timestamp(),
-    myFormat
-  ),
-  transports: [
-    new winston.transports.File({
-      filename: `logs/error-${new Date().toISOString().substring(0, 10)}.log`,
-      level: "error"
-    }),
-    new winston.transports.File({
-      filename: `logs/combined-${new Date().toISOString().substring(0, 10)}.log`
-    })
-  ]
-});
+// const logger = winston.createLogger({
+//   format: combine(
+//     label({ label: "APS" }),
+//     timestamp(),
+//     myFormat
+//   ),
+//   transports: [
+//     new winston.transports.File({
+//       filename: `logs/error-${new Date().toISOString().substring(0, 10)}.log`,
+//       level: "error"
+//     }),
+//     new winston.transports.File({
+//       filename: `logs/combined-${new Date().toISOString().substring(0, 10)}.log`
+//     })
+//   ]
+// });
 
-app.use(morgan("combined", {
-  stream: {
-    write: message => logger.info(message)
-  }
-}))
+// app.use(morgan("combined", {
+//   stream: {
+//     write: message => logger.info(message)
+//   }
+// }))
 
 // view engine setup
 // view engine setup

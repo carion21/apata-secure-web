@@ -4,6 +4,8 @@ const moment = require('moment')
 const randomstring = require("randomstring");
 moment.locale("fr");
 
+const CryptoJS = require("crypto-js");
+
 require('dotenv').config()
 
 
@@ -60,6 +62,10 @@ class Utils {
             length: 4,
             charset: '1234567890'
         });
+    }
+
+    static generateHash(buff) {
+        return CryptoJS.SHA256("Message");
     }
 
 

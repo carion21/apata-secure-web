@@ -286,6 +286,7 @@ const generate_qr_code = (async (data) => {
 
   try {
     let response = await axios.post(urlcomplete, data)
+    console.log(response.data);
     if (response.status == 200 && response.data.status == "success") {
       let rdata = response.data
       result.success = true

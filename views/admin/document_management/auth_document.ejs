@@ -2,14 +2,14 @@
 
 <hr class="my-2">
 <h2 class="h5 text-primary mb-4">
-  Veuillez joindre le document que vous souhaitez ajouter
+  Veuillez joindre le document que vous souhaitez authentifier
 </h2>
 
 <div class="alert alert-warning">
-  <strong>Attention!</strong> Votre document doit être au format PDF. Ce document se verra apposer un QR code qui sera son identifiant unique.
+  <strong>Attention!</strong> Votre document doit être au format PDF et contenir le QR code.
 </div>
 
-<form method="post" action="<%= routedebase %>/document_management/new_document"
+<form method="post" action="<%= routedebase %>/document_management/auth_document"
   enctype="multipart/form-data"
   class="needs-validation border-bottom pb-3 pb-lg-4" novalidate>
 
@@ -19,8 +19,26 @@
     </div>
   <% } %>
 
+  <% if (locals.message) { %>
+    <div class="alert alert-success">
+      <strong>Succès!</strong> <%= locals.message %>
+    </div>
+  <% } %>
+
   <div class="row pb-2">
-    <div class="col-sm-12 mb-2">
+    <div class="col-sm-4 mb-4">
+      <label for="fn" class="form-label fs-base">
+        Code du document
+      </label>
+      <input type="text" id="fn" class="form-control form-control-lg"
+        name="code"
+        value="<% if (locals.rbody) { %><%= rbody.code %><% } %>"
+        required>
+      <div class="invalid-feedback">
+        S'il vous plaît entrez le code du document!
+      </div>
+    </div>
+    <div class="col-sm-8 mb-2">
       <label for="fl-textarea" class="form-label fs-base">
         <span class="text-danger">*</span>
         Document
@@ -30,6 +48,7 @@
         max-size="10MB" name="document" required>
     </div>
   </div>
+
 
   <div class="d-flex mb-3">
     <a class="btn btn-secondary me-3"

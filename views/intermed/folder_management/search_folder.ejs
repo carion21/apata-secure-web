@@ -1,0 +1,70 @@
+<% extend('../base_intermed') %>
+
+
+<!-- Light table with hoverable rows -->
+  <div class="row">
+    <div class="col-md-12">
+      <form action="<%= routedebase %>/folder_management/search_folder" method="post">
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" placeholder="Code du folder" name="code"
+            value="<% if (locals.rbody) { %><%= rbody.code %><% } %>">
+          <button class="btn btn-outline-primary" type="submit">
+            <i class="bx bx-search-alt-2 fs-4"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <hr>
+  <br>
+  <div class="row">
+    <% if (locals.folders && folders.length == 0) { %>
+      <div class="alert alert-warning">
+        Aucun folder correspondant à votre recherche
+      </div>
+    <% } else if (!locals.folders) { %>
+      <div class="alert alert-info">
+        Veuillez effectuer une recherche...
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead
+            <tr>
+              <th>#</th>
+              <th>Code</th>
+              <th>Statut</th>
+              <th>Details</th>
+            </tr>
+            </thead>
+            <tbody>
+              <% for (f of folders) { %>
+                <tr>
+                  <th scope="row">
+                    <%= folders.indexOf(f) + 1 %>
+                  </th>
+                  <td>
+                    <%= f.code %>
+                  </td>
+                  <td>
+                    <% if (f.status == 1) { %>
+                      <span class="badge bg-success">Actif</span>
+                    <% } else { %>
+                      <span class="badge bg-danger">Inactif</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#dsearch_<%= f.code %>">
+                      <i class="bx bxs-detail fs-4"></i>
+                    </button>
+                    <%- include('../components/dsearch_folder') %>
+                  </td>
+                </tr>
+              <% } %> 
+            </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>

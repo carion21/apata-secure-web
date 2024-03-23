@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<%- include('../base/office/head') %>
+
+<!-- Body -->
+
+<body>
+
+  <%- include('../base/office/loader') %>
+
+  <!-- Page wrapper for sticky footer -->
+  <!-- Wraps everything except footer to push footer to the bottom of the page if there is little content -->
+  <main class="page-wrapper">
+
+    <%- include('../base/office/navbar') %>
+
+    <!-- Page content -->
+    <section class="container pt-5">
+      <div class="row">
+
+        <%- include('../base/office/sidebar') %>
+
+        <div class="col-md-8 offset-lg-1 pb-5 mb-2 mb-lg-4 pt-md-5 mt-n3 mt-md-0">
+          <div class="ps-md-3 ps-lg-0 mt-md-2 py-md-4">
+            <h1 class="h2 pt-xl-1 pb-3">
+              <%= pagename %>
+            </h1>
+      
+            <%- content %>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+
+  <%- include('../base/office/footer') %>
+
+
+  <!-- Vendor Scripts -->
+  <script src="/templates/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/templates/assets/vendor/smooth-scroll/dist/smooth-scroll.polyfills.min.js"></script>
+  <script src="/templates/assets/vendor/cleave.js/dist/cleave.min.js"></script>
+
+  <!-- Main Theme Script -->
+  <script src="/templates/assets/js/theme.min.js"></script>
+</body>
+
+</html>

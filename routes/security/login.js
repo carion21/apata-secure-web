@@ -1,8 +1,8 @@
 const express = require('express');
 const axios = require('axios');
 
-const { getMoment, getDirectusUrl } = require('../../config/utils');
-const { APP_NAME, APP_VERSION, APP_DESCRIPTION, DEFAULT_ROUTE_CLIENT, USERPROFILE_TYPE_CLIENT, USERPROFILE_TYPES, DEFAULT_ROUTE_ADMIN } = require('../../config/consts');
+const { getMoment, getDirectusUrl, getRouteDeBase } = require('../../config/utils');
+const { APP_NAME, APP_VERSION, APP_DESCRIPTION, DEFAULT_ROUTE_CLIENT, USERPROFILE_TYPE_CLIENT, USERPROFILE_TYPES, DEFAULT_ROUTE_ADMIN, USERPROFILE_TYPE_ADMIN, DEFAULT_ROUTE_INTERMED } = require('../../config/consts');
 const { control_service_data, directus_retrieve_user, directus_verify_hash, directus_create_connection_history } = require('../../config/global_functions');
 const router = express.Router();
 
@@ -38,6 +38,7 @@ router.post('/', async function (req, res, next) {
 
     if (r_dts_user.success) {
       let user_data = r_dts_user.data
+
       let r_dts_verify_hash = await directus_verify_hash(body.password, user_data.password)
 
       if (r_dts_verify_hash.success) {
@@ -47,7 +48,8 @@ router.post('/', async function (req, res, next) {
 
           if (r_dts_new_connection_history.success) {
             req.session.userdata = user_data
-            let route = DEFAULT_ROUTE_ADMIN
+            let route = user_data.profile == USERPROFILE_TYPE_ADMIN ? DEFAULT_ROUTE_ADMIN : DEFAULT_ROUTE_INTERMED
+            console.log("Redirecting to: " + route);
             res.redirect(route)
           } else {
             error = r_dts_new_connection_history.message

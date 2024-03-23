@@ -1,4 +1,4 @@
-const { SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, } = require("./consts")
+const { SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, } = require("./consts")
 const { isString, isInteger, isBoolean, isObject, isArray, isNumber, isArrayOfString, isArrayOfInteger, getMoment, getDirectusUrl, genUserCode } = require("./utils")
 
 const axios = require('axios');
@@ -306,37 +306,37 @@ const generate_qr_code = (async (data) => {
 })
 
 const convertImageToPdf = (async (imagePath, pdfPath) => {
-	// Read the image file asynchronously.
-	const image = await fs.promises.readFile(imagePath);
+  // Read the image file asynchronously.
+  const image = await fs.promises.readFile(imagePath);
 
-	// Create a new PDF document.
-	const pdfDoc = await PDFDocument.create();
+  // Create a new PDF document.
+  const pdfDoc = await PDFDocument.create();
 
-	// Embed the image into the PDF document.
-	const imageEmbed = await pdfDoc.embedJpg(image);
+  // Embed the image into the PDF document.
+  const imageEmbed = await pdfDoc.embedJpg(image);
 
   const page = pdfDoc.addPage([imageEmbed.width, imageEmbed.height]);
 
-	// Scale the image to fit within the page dimensions while preserving aspect ratio.
-	const { width, height } = imageEmbed.scaleToFit(
-		page.getWidth(),
-		page.getHeight()
-	);
+  // Scale the image to fit within the page dimensions while preserving aspect ratio.
+  const { width, height } = imageEmbed.scaleToFit(
+    page.getWidth(),
+    page.getHeight()
+  );
 
-	// Draw the image on the PDF page.
-	page.drawImage(imageEmbed, {
-		x: page.getWidth() / 2 - width / 2, // Center the image horizontally.
-		y: page.getHeight() / 2 - height / 2, // Center the image vertically.
-		width,
-		height,
-		color: rgb(0, 0, 0), // Set the image color to black.
-	});
+  // Draw the image on the PDF page.
+  page.drawImage(imageEmbed, {
+    x: page.getWidth() / 2 - width / 2, // Center the image horizontally.
+    y: page.getHeight() / 2 - height / 2, // Center the image vertically.
+    width,
+    height,
+    color: rgb(0, 0, 0), // Set the image color to black.
+  });
 
-	// Save the PDF document as bytes.
-	const pdfBytes = await pdfDoc.save();
+  // Save the PDF document as bytes.
+  const pdfBytes = await pdfDoc.save();
 
-	// Write the PDF bytes to a file asynchronously.
-	await fs.promises.writeFile(pdfPath, pdfBytes);
+  // Write the PDF bytes to a file asynchronously.
+  await fs.promises.writeFile(pdfPath, pdfBytes);
   // remove the image file
   await fs.promises.unlink(imagePath);
 });
@@ -377,7 +377,7 @@ const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath
   // Parcourir chaque page du PDF
   for (let i = 0; i < pages.length; i++) {
     const { width, height } = pages[i].getSize();
-    const qrCodeSize = 50; // Taille du code QR
+    const qrCodeSize = 75; // Taille du code QR
     const x = width - qrCodeSize - 10; // 20 pixels de marge depuis le bord droit
     const y = 10; // 20 pixels de marge depuis le bord supérieur
 
@@ -393,6 +393,9 @@ const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath
   // Écrire le fichier PDF de sortie
   const modifiedPdfBytes = await pdfDoc.save();
   await fs.promises.writeFile(outputPath, modifiedPdfBytes);
+  // return buffer
+  const docbuff = await fs.promises.readFile(outputPath)
+  return docbuff
 })
 
 const directus_retrieve_user = (async (username) => {
@@ -402,6 +405,7 @@ const directus_retrieve_user = (async (username) => {
   let error = ""
 
   let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?filter[username][_eq]=" + username
+  // urlcomplete += "&fields[]=*,profile.*"
   try {
     let response = await axios.get(urlcomplete)
     if (response.status == 200) {
@@ -565,7 +569,68 @@ const directus_list_documents = (async (filters) => {
   let error = ""
 
   let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[status][_eq]=true"
+  urlcomplete += "&fields[]=*,user.*,folder.*"
+  if (filters.user) {
+    urlcomplete += "&filter[user][_eq]=" + filters.user
+  }
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_list_documents_by_folder = (async (folder_id) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[folder][_eq]=" + folder_id
   urlcomplete += "&fields[]=*,user.*"
+
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_retrieve_document = (async (document_code) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?limit=1&filter[code][_eq]=" + document_code
   try {
     let response = await axios.get(urlcomplete)
     if (response.status == 200) {
@@ -613,6 +678,126 @@ const directus_create_document = (async (document_data) => {
 
   return result
 })
+
+const directus_list_profiles = (async (filters) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_PROFILE + "?sort=-id"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_list_projects = (async (filters) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_PROJECT + "?sort=-id"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+
+const directus_list_intermeds = (async (filters) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?sort=-id&fields[]=*,aps_profile.*,aps_project.*&filter[profile][_eq]=" + USERPROFILE_TYPE_INTERMED
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_create_intermed = (async (intermed_data) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER
+  try {
+    intermed_data.code = genUserCode()
+    intermed_data.username = intermed_data.email
+    intermed_data.password = "12341234"
+    intermed_data.profile = USERPROFILE_TYPE_INTERMED
+    intermed_data.status = true
+    let response = await axios.post(urlcomplete, intermed_data)
+    if (response.status == 200 || response.status == 201 || response.status == 204) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.response.data ? err.response.data.errors[0].message : err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+
 
 const directus_list_clients = (async (filters) => {
   let result = {
@@ -675,6 +860,197 @@ const directus_create_client = (async (client_data) => {
   return result
 })
 
+const directus_retrieve_folder = (async (folder_id) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?limit=1&filter[id][_eq]=" + folder_id
+  urlcomplete += "&fields[]=*,project.*,owner.*"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_list_folders = (async (filters) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?sort=-id"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+
+const directus_list_intermed_folders = (async (filters) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR + "?sort=-id"
+
+  if (filters.actor) {
+    urlcomplete += "&filter[actor][_eq]=" + filters.actor
+  }
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+
+      let folders = []
+      const folder_ids = rdata.data.map(folder_actor => folder_actor.folder)
+      urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?sort=-id&filter[id][_in]=" + folder_ids.join(",")
+      urlcomplete += "&fields[]=*,project.*,owner.*"
+      let response_folders = await axios.get(urlcomplete)
+      if (response_folders.status == 200) {
+        let rdata_folders = response_folders.data
+        folders = rdata_folders.data
+
+        result.success = true
+        result.data = rdata.data.map(folder_actor => {
+          let folder = folders.find(f => f.id == folder_actor.folder)
+          return folder
+        })
+      } else {
+        error = response_folders.data.message
+      }
+
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_search_folder = (async (folder_code) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?limit=1&filter[short_code][_contains]=" + folder_code
+  urlcomplete += "&fields[]=*,project.*,owner.*"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_create_folder_actor = (async (folder_actor_data) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR
+  try {
+    let response = await axios.post(urlcomplete, folder_actor_data)
+    if (response.status == 200 || response.status == 201 || response.status == 204) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.response.data ? err.response.data.errors[0].message : err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_filter_folder_actor = (async (folder_ids) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR + "?sort=-id&filter[folder][_in]=" + folder_ids.join(",")
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
 
 module.exports = {
   control_service_data,
@@ -687,7 +1063,19 @@ module.exports = {
   directus_create_connection_history,
   directus_update_user_password,
   directus_list_documents,
+  directus_list_documents_by_folder,
+  directus_retrieve_document,
   directus_create_document,
+  directus_list_projects,
+  directus_list_profiles,
+  directus_list_intermeds,
+  directus_create_intermed,
   directus_list_clients,
-  directus_create_client
+  directus_create_client,
+  directus_retrieve_folder,
+  directus_list_folders,
+  directus_list_intermed_folders,
+  directus_search_folder,
+  directus_create_folder_actor,
+  directus_filter_folder_actor
 }

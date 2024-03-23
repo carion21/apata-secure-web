@@ -7,6 +7,8 @@ const { activeSidebare, getIndice } = require('../../../config/sidebare');
 const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf, convertImageToPdf } = require('../../../config/global_functions');
 const router = express.Router();
 
+const fs = require('fs');
+
 const urlapi = getDirectusUrl();
 const moment = getMoment();
 
@@ -99,8 +101,6 @@ router.post('/:id', async function (req, res, next) {
           stringdata: doc_code
         })
 
-        console.log(r_gen_qrcode);
-
         if (r_gen_qrcode.success) {
 
             // get buffer from qrcode link
@@ -108,39 +108,39 @@ router.post('/:id', async function (req, res, next) {
             responseType: 'arraybuffer'
           })
 
-          const hash  = generateHash(buff)
+          let inputFile = fileName
+          let outputFile = "secure-" + fileName.replace("document-", "")
+          const docbuff = await add_qr_code_to_pdf(
+            "public/uploads/" + inputFile,
+            buff.data,
+            doc_code,
+            "public/uploads/" + outputFile
+          )
 
-          result.success = true
-          result.message = "Document created"
-          result.hash = hash
+          //  docbuff = await fs.promises.readFile("public/uploads/" + outputFile)
+          const hash  = generateHash(docbuff)
 
-          // let inputFile = fileName
-          // let outputFile = "secure-" + fileName.replace("document-", "")
-          // add_qr_code_to_pdf(
-          //   "public/uploads/" + inputFile,
-          //   buff.data,
-          //   doc_code,
-          //   "public/uploads/" + outputFile
-          // )
+          console.log(hash);
 
-          // let doc_data = {
-          //   code: doc_code,
-          //   user: parseInt(id),
-          //   input_path: inputFile,
-          //   output_path: outputFile,
-          //   qrcode_link: r_gen_qrcode.link,
-          //   created_at: creation_date
-          // }
+          let doc_data = {
+            code: doc_code,
+            user: parseInt(id),
+            input_path: inputFile,
+            output_path: outputFile,
+            qrcode_link: r_gen_qrcode.link,
+            created_at: creation_date,
+            hash: hash
+          }
 
-          // let r_dts_new_document = await directus_create_document(doc_data)
+          let r_dts_new_document = await directus_create_document(doc_data)
 
-          // if (r_dts_new_document.success) {
-          //   result.success = true
-          //   result.message = "Document created"
-          // } else {
-          //   error = r_dts_new_document.message
-          //   result.message = error
-          // }
+          if (r_dts_new_document.success) {
+            result.success = true
+            result.message = "Document created"
+          } else {
+            error = r_dts_new_document.message
+            result.message = error
+          }
 
         } else {
           error = r_gen_qrcode.message

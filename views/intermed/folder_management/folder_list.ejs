@@ -1,21 +1,12 @@
-<% extend('../base_admin') %>
+<% extend('../base_intermed') %>
 
 <div class="row justify-content-end">
   <div class="col-md-4">
     <a class="btn btn-outline-primary px-3 px-sm-4 mb-2"
-      href="<%= routedebase %>/document_management/auth_document">
+      href="<%= routedebase %>/folder_management/search_folder">
       <i class="bx bx-layer-plus fs-xl me-sm-1"></i>
       <span class="d-none d-sm-inline">
-        Authentifier un document
-      </span>
-    </a>
-  </div>
-  <div class="col-md-4">
-    <a class="btn btn-outline-primary px-3 px-sm-4 mb-2"
-      href="<%= routedebase %>/document_management/new_document">
-      <i class="bx bx-layer-plus fs-xl me-sm-1"></i>
-      <span class="d-none d-sm-inline">
-        Ajouter un document
+        Rechercher un folder
       </span>
     </a>
   </div>
@@ -29,42 +20,32 @@
           <th>#</th>
           <th>Code</th>
           <th>Statut</th>
-          <th>Contenu</th>
           <th>Details</th>
         </tr>
         </thead>
         <tbody>
-          <% for (d of docs) { %>
+          <% for (f of folders) { %>
             <tr>
-
               <th scope="row">
-                <%= docs.indexOf(d) + 1 %>
+                <%= folders.indexOf(f) + 1 %>
               </th>
               <td>
-                <%= d.code %>
+                <%= f.code %>
               </td>
               <td>
-                <% if (d.status == 1) { %>
+                <% if (f.status == 1) { %>
                   <span class="badge bg-success">Actif</span>
                 <% } else { %>
                   <span class="badge bg-danger">Inactif</span>
                 <% } %>
               </td>
               <td>
-                <a type="button" class="btn btn-sm btn-secondary"
-                  target="_blank"
-                  href="/uploads/<%= d.output_path %>">
-                    <i class="bx bxs-dock-left fs-4"></i>
-                </a>
-                <%# include('../components/details_document') %>
-              </td>
-              <td>
                 <button type="button" class="btn btn-sm btn-outline-secondary"
                 data-bs-toggle="modal"
-                data-bs-target="#details_<%= d.code %>">
+                data-bs-target="#details_<%= f.code %>">
                   <i class="bx bxs-detail fs-4"></i>
                 </button>
-                <%- include('../components/details_document') %>
+                <%- include('../components/details_folder') %>
               </td>
             </tr>
           <% } %> 

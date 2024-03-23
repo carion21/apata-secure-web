@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger } = require('../../../config/utils');
-const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
+const { DEFAULT_PROFILE_INTERMED, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
 const { directus_list_orders, directus_count_orders, directus_retrieve_user, control_service_data, directus_verify_hash, directus_update_user_password } = require('../../../config/global_functions');
 const router = express.Router();
@@ -10,11 +10,11 @@ const router = express.Router();
 const urlapi = getDirectusUrl();
 const moment = getMoment();
 
-const SERVICE_TYPE = "admin_security"
+const SERVICE_TYPE = "intermed_security"
 
-const profile = DEFAULT_PROFILE_ADMIN;
+const profile = DEFAULT_PROFILE_INTERMED;
 const tabside = getTabSideBase(profile)
-const idbloc = 4
+const idbloc = 3
 const blocname = tabside[idbloc].texte
 const pagename = "Sécurité"
 const template = "security"

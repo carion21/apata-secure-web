@@ -1,0 +1,90 @@
+<% extend('../base_intermed') %>
+
+<hr class="my-2">
+<h2 class="h5 text-primary mb-4">
+  Veuillez joindre le document que vous souhaitez ajouter
+</h2>
+
+<div class="alert alert-warning">
+  <strong>Attention!</strong> Votre document doit être au format PDF. Ce document se verra apposer un QR code qui sera son identifiant unique.
+</div>
+
+<% if (folders.length == 0) { %>
+  <div class="alert alert-warning">
+    <strong>Attention!</strong> Vous n'avez pas encore créé de dossier. Veuillez en joindre un avant de continuer.
+  </div>
+<% } else { %>
+  <form method="post" action="<%= routedebase %>/document_management/new_document"
+    enctype="multipart/form-data"
+    class="needs-validation border-bottom pb-3 pb-lg-4" novalidate>
+  
+    <% if (locals.error) { %>
+      <div class="alert alert-danger">
+        <strong>Erreur!</strong> <%= locals.error %>
+      </div>
+    <% } %>
+    <% if (locals.message) { %>
+      <div class="alert alert-success">
+        <strong>Information!</strong> <%= locals.message %>
+        <a class="btn btn-primary btn-sm"
+          href="<%= routedebase %>/folder_management/view_folder/<%= vfolder.id %>">
+          Consulter le folder associé
+        </a>
+      </div>
+    <% } %>
+
+    <div class="row pb-2">
+      <div class="col-sm-12 mb-4">
+        <label for="fn" class="form-label fs-base">
+          <span class="text-danger">*</span>
+          Titre du document
+        </label>
+        <input type="text" id="fn" class="form-control form-control-lg"
+          name="title"
+          value="<% if (locals.rbody) { %><%= rbody.title %><% } %>"
+          required>
+        <div class="invalid-feedback">
+          S'il vous plaît entrez votre titre!
+        </div>
+      </div>
+    </div>
+  
+    <div class="row pb-2">
+      <div class="col-sm-5 mb-2">
+        <label for="folder" class="form-label fs-base">
+          <span class="text-danger">*</span>
+          Folder
+        </label>
+        <select name="folder" id="folder" class="form-select form-select-lg" required>
+          <option value="">
+            Sélectionnez un folder
+          </option>
+          <% for (f of folders) { %>
+            <option value="<%= f.id %>">
+              <%= f.project.label %> - <%= f.short_code %>
+            </option>
+          <% } %>
+        </select>
+      </div>
+      <div class="col-sm-7 mb-2">
+        <label for="fl-textarea" class="form-label fs-base">
+          <span class="text-danger">*</span>
+          Document
+        </label>
+        <input class="form-control form-control-lg" id="formFileLg" type="file"
+          accept=".pdf"
+          max-size="10MB" name="document" required>
+      </div>
+    </div>
+  
+    <div class="d-flex mb-3">
+      <a class="btn btn-secondary me-3"
+        href="<%= routedebase %>/document_management/document_list">
+        Retour
+      </a>
+      <button type="submit" class="btn btn-primary">
+        Je confirme
+      </button>
+    </div>
+  </form>
+<% } %>

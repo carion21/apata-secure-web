@@ -1,18 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-const service = 'admin'
+const service = 'intermed'
 
 // routers
 const index = require('../routes/' + service + '/index')
 
-const client_list = require('../routes/' + service + '/client_management/client_list')
-const new_client = require('../routes/' + service + '/client_management/new_client')
-const view_client = require('../routes/' + service + '/client_management/view_client')
-
-const intermed_list = require('../routes/' + service + '/intermed_management/intermed_list')
-const new_intermed = require('../routes/' + service + '/intermed_management/new_intermed')
-const view_intermed = require('../routes/' + service + '/intermed_management/view_intermed')
+const folder_list = require('../routes/' + service + '/folder_management/folder_list')
+const search_folder = require('../routes/' + service + '/folder_management/search_folder')
+const join_folder = require('../routes/' + service + '/folder_management/join_folder')
+const edit_folder = require('../routes/' + service + '/folder_management/edit_folder')
+const view_folder = require('../routes/' + service + '/folder_management/view_folder')
 
 const document_list = require('../routes/' + service + '/document_management/document_list')
 const new_document = require('../routes/' + service + '/document_management/new_document')
@@ -27,13 +25,11 @@ const account_details = require('../routes/' + service + '/user_management/accou
 // routes with each router
 router.use('/', index)
 
-router.use('/client_management/client_list', client_list)
-router.use('/client_management/new_client', new_client)
-router.use('/client_management/view_client', view_client)
-
-router.use('/intermed_management/intermed_list', intermed_list)
-router.use('/intermed_management/new_intermed', new_intermed)
-router.use('/intermed_management/view_intermed', view_intermed)
+router.use('/folder_management/folder_list', folder_list)
+router.use('/folder_management/search_folder', search_folder)
+router.use('/folder_management/join_folder', join_folder)
+router.use('/folder_management/edit_folder', edit_folder)
+router.use('/folder_management/view_folder', view_folder)
 
 router.use('/document_management/document_list', document_list)
 router.use('/document_management/new_document', new_document)

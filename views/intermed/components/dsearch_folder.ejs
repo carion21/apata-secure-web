@@ -1,0 +1,63 @@
+<div class="modal fade" id="dsearch_<%=f.code %>" tabindex="-" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Folder No : <%= f.code %>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <% if (f.joined) { %>
+          <div class="alert alert-success" role="alert">
+            Vous avez déjà rejoint ce dossier.
+          </div>
+        <% } %>
+        
+        <!-- Light table with hoverable rows -->
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <tbody>
+              <tr>
+                <th>Code</th>
+                <td><b><%= f.code %></b></td>
+              </tr>
+              <tr>
+                <th>Short-Code</th>
+                <td><b><%= f.short_code %></b></td>
+              </tr>
+              <tr>
+                <th>Projet</th>
+                <td><%= f.project.label || "Non défini" %></td>
+              </tr>
+              <tr>
+                <th>Propriétaire</th>
+                <td><%= f.owner.lastname %> <%= f.owner.firstname %></td>
+              </tr>
+              <tr>
+                <th>Créé le</th>
+                <td><%= moment(f.created_at).format('DD/MM/YYYY HH:mm:ss') %></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <% if (f.joined) { %>
+          <a class="btn btn-primary bnt-sm disabled">
+            Rejoindre
+          </a>
+        <% } else { %>
+          <a class="btn btn-primary bnt-sm" href="<%= routedebase %>/folder_management/join_folder/<%= f.id %>">
+            Rejoindre
+          </a>
+        <% } %>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

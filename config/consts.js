@@ -11,18 +11,23 @@ class Consts {
     static USERPROFILE_TYPE_UNDEFINED = 0;
     static USERPROFILE_TYPE_ADMIN = 6;
     static USERPROFILE_TYPE_CLIENT = 7;
+    static USERPROFILE_TYPE_INTERMED = 8;
 
     static USERPROFILE_TYPES = [
-        Consts.USERPROFILE_TYPE_ADMIN
+        Consts.USERPROFILE_TYPE_ADMIN,
+        Consts.USERPROFILE_TYPE_INTERMED
     ];
 
     static DEFAULT_PROFILE_ADMIN = "admin";
+    static DEFAULT_PROFILE_INTERMED = "intermed";
 
     static DEFAULT_PROFILES = [
-        Consts.DEFAULT_PROFILE_ADMIN
+        Consts.DEFAULT_PROFILE_ADMIN,
+        Consts.DEFAULT_PROFILE_INTERMED
     ];
     
     static DEFAULT_ROUTE_ADMIN = "/"+Consts.DEFAULT_PROFILE_ADMIN;
+    static DEFAULT_ROUTE_INTERMED = "/"+Consts.DEFAULT_PROFILE_INTERMED;
 
     static DEFAULT_TYPES = [
         "string",
@@ -46,7 +51,7 @@ class Consts {
 
     static DEFAULT_DURATION_OF_document = 0.1; // minutes
 
-    static QRGENERATOR_URL = "https://qrgeneratorv1.geasscorp.com";
+    static QRGENERATOR_URL = "https://qrgen.geasscorp.com";
 
     static ROUTE_OF_QRGENERATOR_TO_GENERATE = "/generate";
     static ROUTE_OF_QRGENERATOR_FOR_IMAGE = "/images";
@@ -59,6 +64,10 @@ class Consts {
     static ROUTE_OF_DIRECTUS_FOR_PROFILE="/items/profile"
     static ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT="/items/aps_document"
     static ROUTE_OF_DIRECTUS_FOR_USER="/items/user"
+    static ROUTE_OF_DIRECTUS_FOR_APS_PROFILE="/items/aps_profile"
+    static ROUTE_OF_DIRECTUS_FOR_APS_PROJECT="/items/aps_project_type"
+    static ROUTE_OF_DIRECTUS_FOR_APS_FOLDER="/items/aps_folder"
+    static ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR="/items/aps_folder_actor"
 
 
 
@@ -66,8 +75,14 @@ class Consts {
         "undefined",
         "security_login",
         "admin_new_client",
+        "admin_new_intermed",
         "admin_account_details",
-        "admin_security"
+        "admin_security",
+        "intermed_search_folder",
+        "intermed_new_document",
+        "intermed_edit_folder",
+        "intermed_account_details",
+        "intermed_security",
     ];
 
     static SERVICE_TYPES_FIELDS = {
@@ -82,12 +97,42 @@ class Consts {
             "types": ["string", "string", "string_email", "string_integer"],
             "required": ["lastname", "firstname", "phone"]
         },
+        "admin_new_intermed": {
+            "fields": ["lastname", "firstname", "email", "phone", "profile", "project"],
+            "types": ["string", "string", "string_email", "string_integer", "string_integer", "string_integer"],
+            "required": ["lastname", "firstname", "phone", "profile", "project"]
+        },
         "admin_account_details": {
             "fields": ["lastname", "firstname", "email", "phone"],
             "types": ["string", "string", "string_email", "string_integer"],
             "required": ["lastname", "firstname", "phone"]
         },
         "admin_security": {
+            "fields": ["current_password", "new_password", "confirm_new_password"],
+            "types": ["string", "string", "string"],
+            "required": ["current_password", "new_password", "confirm_new_password"]
+        },
+        "intermed_search_folder": {
+            "fields": ["code"],
+            "types": ["string"],
+            "required": ["code"]
+        },
+        "intermed_edit_folder": {
+            "fields": ["name", "description"],
+            "types": ["string", "string"],
+            "required": ["name"]
+        },
+        "intermed_new_document": {
+            "fields": ["title", "folder"],
+            "types": ["string", "string_integer"],
+            "required": ["title", "folder"]
+        },
+        "intermed_account_details": {
+            "fields": ["lastname", "firstname", "email", "phone"],
+            "types": ["string", "string", "string_email", "string_integer"],
+            "required": ["lastname", "firstname", "phone"]
+        },
+        "intermed_security": {
             "fields": ["current_password", "new_password", "confirm_new_password"],
             "types": ["string", "string", "string"],
             "required": ["current_password", "new_password", "confirm_new_password"]

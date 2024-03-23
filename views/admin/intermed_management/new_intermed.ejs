@@ -1,0 +1,109 @@
+<% extend('../base_admin') %>
+
+<!-- Basic info -->
+  <h2 class="h5 text-primary mb-4">
+    Informations de base
+  </h2>
+
+  <div class="alert alert-warning">
+    <strong>Attention!</strong>
+    Le mot de passe par défaut sera le `12345678`.
+  </div>
+
+  <form class="needs-validation border-bottom pb-3 pb-lg-4"
+    action="<%= routedebase %>/intermed_management/new_intermed"
+    method="POST"
+    novalidate>
+
+    <% if (locals.error) { %>
+      <div class="alert alert-danger">
+        <strong>Erreur!</strong> <%= locals.error %>
+      </div>
+    <% } %>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="validationCustom03">Profil</label>
+        <select name="profile" class="form-select" id="validationCustom03" required>
+          <option value="">Choisissez un profil...</option>
+          <% for (pf of profiles) { %>
+            <option value="<%= pf.id %>"><%= pf.label %></option>
+          <% } %>
+        </select>
+        <div class="invalid-feedback">S'il vous plaît entrez un profil valide!</div>
+        <div class="valid-feedback">Looks good!</div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="validationCustom04">Projet</label>
+        <select name="project" class="form-select" id="validationCustom04" required>
+          <option value="">Choisissez un projet...</option>
+          <% for (pr of projects) { %>
+            <option value="<%= pr.id %>"><%= pr.label %></option>
+          <% } %>
+        </select>
+        <div class="invalid-feedback">S'il vous plaît entrez un projet valide!</div>
+        <div class="valid-feedback">Looks good!</div>
+      </div>
+    </div>
+
+    <div class="row pb-2">
+      <div class="col-sm-6 mb-4">
+        <label for="fn" class="form-label fs-base">
+          Nom
+          <span class="text-danger">*</span>
+        </label>
+        <input type="text" id="fn" class="form-control form-control-lg"
+          name="firstname"
+          value="<% if (locals.rbody) { %><%= rbody.firstname %><% } %>"
+          required>
+        <div class="invalid-feedback">
+          S'il vous plaît entrez un nom!
+        </div>
+      </div>
+      <div class="col-sm-6 mb-4">
+        <label for="sn" class="form-label fs-base">
+          Prénom
+          <span class="text-danger">*</span>
+        </label>
+        <input type="text" id="sn" class="form-control form-control-lg"
+          name="lastname"
+          value="<% if (locals.rbody) { %><%= rbody.firstname %><% } %>"
+          required>
+        <div class="invalid-feedback">
+          S'il vous plaît entrez au moins un prénom!
+        </div>
+      </div>
+      <div class="col-sm-6 mb-4">
+        <label for="phone" class="form-label fs-base">
+          Numéro de téléphone
+          <span class="text-danger">*</span>
+          <small class="text-muted">(10 chiffres)</small>
+        </label>
+        <input type="number" id="phone" class="form-control form-control-lg"
+          name="phone"
+          minlength="10"
+          maxlength="10"
+          value="<% if (locals.rbody) { %><%= rbody.phone %><% } %>"
+          required>
+      </div>
+      <div class="col-sm-6 mb-4">
+        <label for="email" class="form-label fs-base">
+          Adresse email 
+          <span class="text-danger">*</span>
+        </label>
+        <input type="email" id="email" name="email" class="form-control form-control-lg" 
+          value="<% if (locals.rbody) { %><%= rbody.email %><% } %>">
+        <div class="invalid-feedback">
+          S'il vous plaît entrez une adresse email!
+        </div>
+      </div>
+    </div>
+    <div class="d-flex mb-3">
+      <button type="reset" class="btn btn-secondary me-3">
+        Annuler
+      </button>
+      <button type="submit" class="btn btn-primary">
+        Enregistrer
+      </button>
+    </div>
+  </form>

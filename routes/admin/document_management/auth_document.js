@@ -1,16 +1,18 @@
 const express = require('express');
 const axios = require('axios');
 
-const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode } = require('../../../config/utils');
+const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode, generateHash } = require('../../../config/utils');
 const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
-const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf } = require('../../../config/global_functions');
+const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf, directus_retrieve_document, directus_verify_hash } = require('../../../config/global_functions');
 const router = express.Router();
+
+const fs = require('fs');
 
 const urlapi = getDirectusUrl();
 const moment = getMoment();
 
-const SERVICE_TYPE = "admin_new_document"
+const SERVICE_TYPE = "admin_auth_document"
 
 const profile = DEFAULT_PROFILE_ADMIN;
 const tabside = getTabSideBase(profile)
@@ -68,7 +70,7 @@ var upload = multer({
 router.get('/', async function (req, res, next) {
 
   res.render(
-    profile + "/document_management/new_document", {
+    profile + "/document_management/auth_document", {
     appName: APP_NAME,
     appVersion: APP_VERSION,
     appDescription: APP_DESCRIPTION,
@@ -85,14 +87,15 @@ router.get('/', async function (req, res, next) {
 });
 
 router.post('/', async function (req, res, next) {
-  let body = req.body
   let error = ""
 
+
   upload(req, res, async function (err) {
+    let body = req.body
     if (err) {
       error = err.toString()
       res.render(
-        profile + "/document_management/new_document", {
+        profile + "/document_management/auth_document", {
         appName: APP_NAME,
         appVersion: APP_VERSION,
         appDescription: APP_DESCRIPTION,
@@ -105,51 +108,31 @@ router.post('/', async function (req, res, next) {
         tabside: tabside,
         userdata: req.session.userdata,
         moment: moment,
+        rbody: body,
         error: error
       })
     } else {
       const fileName = req.file.filename
+      const code = body.code
 
-      let creation_date = moment().format("YYYY-MM-DD HH:mm:ss")
-      let doc_code = genDocumentCode()
+      const r_dts_document = await directus_retrieve_document(code)
+      const dts_document = r_dts_document.data.length == 1 ? r_dts_document.data[0] : null
 
-      let r_gen_qrcode = await generate_qr_code({
-        stringdata: doc_code
-      })
-
-      if (r_gen_qrcode.success) {
-
+      if (dts_document) {
+        console.log(dts_document);
         // get buffer from qrcode link
-        let buff = await axios.get(r_gen_qrcode.link, {
-          responseType: 'arraybuffer'
-        })
 
-        let inputFile = fileName
-        let outputFile = "secure-" + fileName.replace("document-", "")
-        add_qr_code_to_pdf(
-          "public/uploads/" + inputFile,
-          buff.data,
-          doc_code,
-          "public/uploads/" + outputFile
-        )
+        const docbuff = await fs.promises.readFile("public/uploads/" + dts_document.output_path)
+        const hash = generateHash(docbuff)
 
-        let doc_data = {
-          code: doc_code,
-          user: req.session.userdata.id,
-          input_path: inputFile,
-          output_path: outputFile,
-          qrcode_link: r_gen_qrcode.link,
-          created_at: creation_date
-        }
+        let r_dts_verify_hash = await directus_verify_hash(hash, dts_document.hash)
 
-        let r_dts_new_document = await directus_create_document(doc_data)
+        console.log(r_dts_verify_hash);
 
-        if (r_dts_new_document.success) {
-          res.redirect(routedebase + "/document_management/" + template)
-        } else {
-          error = r_dts_new_document.message
+        if (r_dts_verify_hash.success) {
+
           res.render(
-            profile + "/document_management/new_document", {
+            profile + "/document_management/auth_document", {
             appName: APP_NAME,
             appVersion: APP_VERSION,
             appDescription: APP_DESCRIPTION,
@@ -161,17 +144,36 @@ router.post('/', async function (req, res, next) {
             routedebase: routedebase,
             tabside: tabside,
             userdata: req.session.userdata,
-            documentdata: req.session.documentdata,
             moment: moment,
-            means: means,
+            rbody: body,
+            message: "La signature du document est correcte"
+          })
+
+        } else {
+          error = "La signature du document est incorrecte"
+          res.render(
+            profile + "/document_management/auth_document", {
+            appName: APP_NAME,
+            appVersion: APP_VERSION,
+            appDescription: APP_DESCRIPTION,
+            profile: profile,
+            blocname: blocname,
+            pagename: pagename,
+            page: page,
+            template: template,
+            routedebase: routedebase,
+            tabside: tabside,
+            userdata: req.session.userdata,
+            moment: moment,
+            rbody: body,
             error: error
           })
         }
 
       } else {
-        error = r_gen_qrcode.message
+        error = "Code document not found"
         res.render(
-          profile + "/document_management/new_document", {
+          profile + "/document_management/auth_document", {
           appName: APP_NAME,
           appVersion: APP_VERSION,
           appDescription: APP_DESCRIPTION,
@@ -184,9 +186,18 @@ router.post('/', async function (req, res, next) {
           tabside: tabside,
           userdata: req.session.userdata,
           moment: moment,
+          rbody: body,
           error: error
         })
       }
+
+      // remove file
+      fs.unlink("public/uploads/" + fileName, (err) => {
+        if (err) {
+          console.error(err)
+          return
+        }
+      })
 
     }
   });

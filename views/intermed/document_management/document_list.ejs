@@ -1,4 +1,4 @@
-<% extend('../base_admin') %>
+<% extend('../base_intermed') %>
 
 <div class="row justify-content-end">
   <div class="col-md-4">
@@ -27,6 +27,7 @@
       <thead
         <tr>
           <th>#</th>
+          <th>Folder</th>
           <th>Code</th>
           <th>Statut</th>
           <th>Contenu</th>
@@ -36,10 +37,12 @@
         <tbody>
           <% for (d of docs) { %>
             <tr>
-
               <th scope="row">
                 <%= docs.indexOf(d) + 1 %>
               </th>
+              <td>
+                <%= d.folder.code %>
+              </td>
               <td>
                 <%= d.code %>
               </td>
@@ -67,7 +70,7 @@
                 <%- include('../components/details_document') %>
               </td>
             </tr>
-          <% } %> 
+          <% } %>
         </tbody>
     </table>
   </div>

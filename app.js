@@ -13,8 +13,9 @@ const fs = require('fs');
 const HomeController = require('./controllers/HomeController');
 const ApiController = require('./controllers/ApiController');
 const AdminController = require('./controllers/AdminController');
+const IntermedController = require('./controllers/IntermedController');
 const SecurityController = require('./controllers/SecurityController');
-const { APP_NAME, APP_DESCRIPTION, USERPROFILE_TYPE_CLIENT, APP_VERSION, USERPROFILE_TYPE_ADMIN } = require('./config/consts');
+const { APP_NAME, APP_DESCRIPTION, USERPROFILE_TYPE_CLIENT, APP_VERSION, USERPROFILE_TYPE_ADMIN, USERPROFILE_TYPE_INTERMED } = require('./config/consts');
 const { directus_retrieve_user } = require('./config/global_functions');
 
 const app = express();
@@ -132,12 +133,46 @@ app.use(
     }
 
     if (error) {
-      logger.error("Error while retrieving user data for admin: " + error)
-      logger.error("Redirecting to /security/logout, modactuel: " + modactuel)
+      // logger.error("Error while retrieving user data for admin: " + error)
+      // logger.error("Redirecting to /security/logout, modactuel: " + modactuel)
       console.log("Error while retrieving user data for admin: " + error)
       res.redirect("/security/logout")
     }
   }, AdminController
+)
+
+app.use(
+  '/intermed',
+  async (req, res, next) => {
+    console.log("__IntermedController________________________________")
+    let error = ""
+    if (req.session.userdata) {
+      let r_dts_user = await directus_retrieve_user(req.session.userdata.email)
+
+      if (r_dts_user.success) {
+        let user_data = r_dts_user.data
+
+        if (user_data.profile == USERPROFILE_TYPE_INTERMED && user_data.status) {
+          next()
+        } else {
+          error = "Vous n'êtes pas autorisé à accéder à cette page."
+        }
+
+      } else {
+        error = r_dts_user.message
+      }
+
+    } else {
+      error = "Votre session a expirée."
+    }
+
+    if (error) {
+      // logger.error("Error while retrieving user data for intermed: " + error)
+      // logger.error("Redirecting to /security/logout, modactuel: " + modactuel)
+      console.log("Error while retrieving user data for intermed: " + error)
+      res.redirect("/security/logout")
+    }
+  }, IntermedController
 )
 
 app.use(

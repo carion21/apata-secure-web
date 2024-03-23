@@ -1024,7 +1024,7 @@ const directus_create_folder_actor = (async (folder_actor_data) => {
   return result
 })
 
-const directus_filter_folder_actor = (async (folder_ids) => {
+const directus_filter_folder_actor = (async (actor, folder_ids) => {
   let result = {
     success: false
   }
@@ -1032,6 +1032,7 @@ const directus_filter_folder_actor = (async (folder_ids) => {
   let error = ""
 
   let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR + "?sort=-id&filter[folder][_in]=" + folder_ids.join(",")
+  urlcomplete += "&filter[actor][_eq]=" + actor
   try {
     let response = await axios.get(urlcomplete)
     if (response.status == 200) {

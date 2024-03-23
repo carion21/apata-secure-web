@@ -55,7 +55,7 @@ router.post('/', async function (req, res, next) {
     if (r_dts_folders.success) {
       folders = r_dts_folders.data
       let folder_ids = folders.map(folder => folder.id)
-      let r_dts_folder_actors = await directus_filter_folder_actor(folder_ids)
+      let r_dts_folder_actors = await directus_filter_folder_actor(req.session.userdata.id, folder_ids)
 
       if (r_dts_folder_actors.success) {
         // put true if the folder is already joined by the user

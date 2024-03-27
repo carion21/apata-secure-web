@@ -1,5 +1,5 @@
-const { APP_NAME, APP_AUTHOR, APP_VERSION, APP_DESCRIPTION, DEFAULT_ROUTE_ADMIN, DEFAULT_PROFILE_ADMIN, DIRECTUS_URL, DEFAULT_PROFILE_INTERMED, DEFAULT_ROUTE_INTERMED } = require('./consts');
-const { client, admin, intermed } = require('./tabsidebase');
+const { APP_NAME, APP_AUTHOR, APP_VERSION, APP_DESCRIPTION, DEFAULT_ROUTE_ADMIN, DEFAULT_PROFILE_ADMIN, DIRECTUS_URL, DEFAULT_PROFILE_INTERMED, DEFAULT_ROUTE_INTERMED, DEFAULT_ROUTE_AGENT, DEFAULT_PROFILE_AGENT } = require('./consts');
+const { client, admin, intermed, agent } = require('./tabsidebase');
 const moment = require('moment')
 const randomstring = require("randomstring");
 moment.locale("fr");
@@ -34,6 +34,9 @@ class Utils {
         if (profile == DEFAULT_PROFILE_INTERMED) {
             return intermed()
         }
+        if (profile == DEFAULT_PROFILE_AGENT) {
+            return agent()
+        }
         return []
     }
 
@@ -43,6 +46,9 @@ class Utils {
         }
         if (profile == DEFAULT_PROFILE_INTERMED) {
             return DEFAULT_ROUTE_INTERMED
+        }
+        if (profile == DEFAULT_PROFILE_AGENT) {
+            return DEFAULT_ROUTE_AGENT
         }
         return ""
     }

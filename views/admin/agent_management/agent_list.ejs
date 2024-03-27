@@ -3,10 +3,10 @@
 <div class="row justify-content-end">
   <div class="col-md-4">
     <a class="btn btn-outline-primary px-3 px-sm-4 mb-2"
-      href="<%= routedebase %>/intermed_management/new_intermed">
+      href="<%= routedebase %>/agent_management/new_agent">
       <i class="bx bx-layer-plus fs-xl me-sm-1"></i>
       <span class="d-none d-sm-inline">
-        Ajouter un intervenant
+        Ajouter un agent
       </span>
     </a>
   </div>
@@ -18,41 +18,38 @@
       <thead>
         <tr>
           <th>#</th>
+          <th>Mairie</th>
           <th>Nom</th>
           <th>Téléphone</th>
           <th>Email</th>
           <th>Statut</th>
-          <th>Details</th>
         </tr>
         </thead>
         <tbody>
-          <% for (i of intermeds) { %>
+          <% for (a of agents) { %>
             <tr>
               <th scope="row">
-                <%= intermeds.indexOf(i) + 1 %>
+                <%= agents.indexOf(a) + 1 %>
               </th>
               <td>
-                <%= i.lastname %> <%= i.firstname %>
+                <b>
+                  <%= a.aps_town_hall.label %>
+                </b>
               </td>
               <td>
-                <%= i.phone %>
+                <%= a.lastname %> <%= a.firstname %>
               </td>
               <td>
-                <%= i.email %>
+                <%= a.phone %>
+              </td>
               <td>
-                <% if (i.status) { %>
+                <%= a.email %>
+              <td>
+                <% if (a.status) { %>
                   <span class="badge bg-success">Actif</span>
                 <% } else { %>
                   <span class="badge bg-danger">Inactif</span>
                 <% } %>
-              </td>
-              <td>
-                <button type="button" class="btn btn-sm btn-outline-secondary"
-                data-bs-toggle="modal"
-                data-bs-target="#details_<%= i.code %>">
-                  <i class="bx bxs-detail fs-4"></i>
-                </button>
-                <%- include('../components/details_intermed') %>
               </td>
             </tr>
           <% } %> 

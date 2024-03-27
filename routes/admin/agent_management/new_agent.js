@@ -4,20 +4,20 @@ const axios = require('axios');
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genUserCode } = require('../../../config/utils');
 const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
-const { directus_retrieve_user, directus_create_intermed, control_service_data, directus_list_projects, directus_list_profiles } = require('../../../config/global_functions');
+const { directus_list_orders, directus_count_orders, directus_retrieve_user, directus_create_agent, control_service_data, directus_list_town_hall } = require('../../../config/global_functions');
 const router = express.Router();
 
 const urlapi = getDirectusUrl();
 const moment = getMoment();
 
-const SERVICE_TYPE = "admin_new_intermed"
+const SERVICE_TYPE = "admin_new_agent"
 
 const profile = DEFAULT_PROFILE_ADMIN;
 const tabside = getTabSideBase(profile)
-const idbloc = 3
+const idbloc = 4
 const blocname = tabside[idbloc].texte
-const pagename = "Nouvel intervenant"
-const template = "intermed_list"
+const pagename = "Nouvel agent"
+const template = "agent_list"
 const routedebase = getRouteDeBase(profile)
 const index = getIndice(tabside[idbloc].elements, template)
 const page = tabside[idbloc].elements[index].texte
@@ -25,13 +25,14 @@ activeSidebare(tabside[idbloc].elements, index)
 
 router.get('/', async function (req, res, next) {
 
-  const r_dts_projects = await directus_list_projects({})
-  const projects = r_dts_projects.data
-  const r_dts_profiles = await directus_list_profiles({})
-  const profiles = r_dts_profiles.data
+  const r_dts_town = await directus_list_town_hall()
+  let towns = []
+  if (r_dts_town.success) {
+    towns = r_dts_town.data
+  }
 
   res.render(
-    profile + "/intermed_management/new_intermed", {
+    profile + "/agent_management/new_agent", {
     appName: APP_NAME,
     appVersion: APP_VERSION,
     appDescription: APP_DESCRIPTION,
@@ -44,12 +45,17 @@ router.get('/', async function (req, res, next) {
     tabside: tabside,
     userdata: req.session.userdata,
     moment: moment,
-    projects: projects,
-    profiles: profiles
+    towns: towns
   })
 });
 
 router.post('/', async function (req, res, next) {
+  const r_dts_town = await directus_list_town_hall()
+  let towns = []
+  if (r_dts_town.success) {
+    towns = r_dts_town.data
+  }
+
   let body = req.body
   let bcontrol = control_service_data(SERVICE_TYPE, body)
 
@@ -57,19 +63,18 @@ router.post('/', async function (req, res, next) {
 
   if (bcontrol.success) {
 
-    let r_dts_new_intermed = await directus_create_intermed({
-      aps_project: parseInt(body.project),
-      aps_profile: parseInt(body.profile),
+    let r_dts_new_agent = await directus_create_agent({
       lastname: body.lastname,
       firstname: body.firstname,
       email: body.email,
       phone: body.phone,
+      town_hall: parseInt(body.town)
     })
 
-    if (r_dts_new_intermed.success) {
-      res.redirect(routedebase + "/intermed_management/intermed_list")
+    if (r_dts_new_agent.success) {
+      res.redirect(routedebase + "/agent_management/agent_list")
     } else {
-      error = r_dts_new_intermed.message
+      error = r_dts_new_agent.message
     }
 
   } else {
@@ -78,7 +83,7 @@ router.post('/', async function (req, res, next) {
 
   if (error) {
     res.render(
-      profile + "/intermed_management/new_intermed", {
+      profile + "/agent_management/new_agent", {
       appName: APP_NAME,
       appVersion: APP_VERSION,
       appDescription: APP_DESCRIPTION,
@@ -91,6 +96,7 @@ router.post('/', async function (req, res, next) {
       tabside: tabside,
       userdata: req.session.userdata,
       moment: moment,
+      towns: towns,
       rbody: body,
       error: error
     })

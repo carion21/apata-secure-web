@@ -14,6 +14,10 @@ const intermed_list = require('../routes/' + service + '/intermed_management/int
 const new_intermed = require('../routes/' + service + '/intermed_management/new_intermed')
 const view_intermed = require('../routes/' + service + '/intermed_management/view_intermed')
 
+const agent_list = require('../routes/' + service + '/agent_management/agent_list')
+const new_agent = require('../routes/' + service + '/agent_management/new_agent')
+const view_agent = require('../routes/' + service + '/agent_management/view_agent')
+
 const document_list = require('../routes/' + service + '/document_management/document_list')
 const new_document = require('../routes/' + service + '/document_management/new_document')
 const view_document = require('../routes/' + service + '/document_management/view_document')
@@ -34,6 +38,10 @@ router.use('/client_management/view_client', view_client)
 router.use('/intermed_management/intermed_list', intermed_list)
 router.use('/intermed_management/new_intermed', new_intermed)
 router.use('/intermed_management/view_intermed', view_intermed)
+
+router.use('/agent_management/agent_list', agent_list)
+router.use('/agent_management/new_agent', new_agent)
+router.use('/agent_management/view_agent', view_agent)
 
 router.use('/document_management/document_list', document_list)
 router.use('/document_management/new_document', new_document)

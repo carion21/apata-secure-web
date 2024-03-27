@@ -14,7 +14,7 @@ const SERVICE_TYPE = "admin_account_details"
 
 const profile = DEFAULT_PROFILE_ADMIN;
 const tabside = getTabSideBase(profile)
-const idbloc = 4
+const idbloc = 5
 const blocname = tabside[idbloc].texte
 const pagename = "Détail du compte"
 const template = "account_details"

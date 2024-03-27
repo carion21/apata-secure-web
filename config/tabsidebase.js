@@ -1,7 +1,7 @@
 const Sidebare = require('../config/sidebare')
 const ElementSidebare = require('../config/element_sidebare')
 const BlocSidebare = require('./bloc_sidebare')
-const { DEFAULT_ROUTE_ADMIN, DEFAULT_ROUTE_INTERMED } = require('./consts')
+const { DEFAULT_ROUTE_ADMIN, DEFAULT_ROUTE_INTERMED, DEFAULT_ROUTE_AGENT } = require('./consts')
 
 
 class TabSidebase {
@@ -35,9 +35,15 @@ class TabSidebase {
         ]
       ),
       BlocSidebare.nouveauBloc(
-        "gestion des intermediaires",
+        "gestion des intervenants",
         [
           ElementSidebare.nouveauElement("Intervenants", DEFAULT_ROUTE_ADMIN + "/intermed_management/intermed_list", "intermed_management/intermed_list", "bx bx-smile", 0),
+        ]
+      ),
+      BlocSidebare.nouveauBloc(
+        "gestion des agents",
+        [
+          ElementSidebare.nouveauElement("Agents de mairie", DEFAULT_ROUTE_ADMIN + "/agent_management/agent_list", "agent_management/agent_list", "bx bx-smile", 0),
         ]
       ),
       BlocSidebare.nouveauBloc(
@@ -80,6 +86,35 @@ class TabSidebase {
         [
           ElementSidebare.nouveauElement("Détails du compte", DEFAULT_ROUTE_INTERMED + "/user_management/account_details", "user_management/account_details", "bx bx-cog", 0),
           ElementSidebare.nouveauElement("Sécurité", DEFAULT_ROUTE_INTERMED + "/user_management/security", "user_management/security", "bx bx-lock-alt", 0),
+          ElementSidebare.nouveauElement("Déconnexion", "/security/logout", "security/logout", "bx bx-log-out", 0),
+        ]
+      ),
+    ]
+  }
+
+  /**
+   * MENU DU COMPTE AGENT DE MAIRIE
+   */
+
+  static agent() {
+    return [
+      BlocSidebare.nouveauBloc(
+        "accueil",
+        [
+          ElementSidebare.nouveauElement("Tableau de bord", DEFAULT_ROUTE_AGENT + "", "index", "bx bx-home", 0),
+        ]
+      ),
+      BlocSidebare.nouveauBloc(
+        "gestion des documents",
+        [
+          ElementSidebare.nouveauElement("Documents", DEFAULT_ROUTE_AGENT + "/document_management/document_list", "document_management/document_list", "bx bx-package", 0),
+        ]
+      ),
+      BlocSidebare.nouveauBloc(
+        "mon compte",
+        [
+          ElementSidebare.nouveauElement("Détails du compte", DEFAULT_ROUTE_AGENT + "/user_management/account_details", "user_management/account_details", "bx bx-cog", 0),
+          ElementSidebare.nouveauElement("Sécurité", DEFAULT_ROUTE_AGENT + "/user_management/security", "user_management/security", "bx bx-lock-alt", 0),
           ElementSidebare.nouveauElement("Déconnexion", "/security/logout", "security/logout", "bx bx-log-out", 0),
         ]
       ),

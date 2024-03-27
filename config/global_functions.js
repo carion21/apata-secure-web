@@ -1,4 +1,4 @@
-const { SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, } = require("./consts")
+const { SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, USERPROFILE_TYPE_AGENT, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE, } = require("./consts")
 const { isString, isInteger, isBoolean, isObject, isArray, isNumber, isArrayOfString, isArrayOfInteger, getMoment, getDirectusUrl, genUserCode } = require("./utils")
 
 const axios = require('axios');
@@ -405,7 +405,7 @@ const directus_retrieve_user = (async (username) => {
   let error = ""
 
   let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?filter[username][_eq]=" + username
-  // urlcomplete += "&fields[]=*,profile.*"
+  urlcomplete += "&fields[]=*,aps_town_all.*,aps_profile.*"
   try {
     let response = await axios.get(urlcomplete)
     if (response.status == 200) {
@@ -860,6 +860,69 @@ const directus_create_client = (async (client_data) => {
   return result
 })
 
+const directus_list_agents = (async (filters) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?sort=-id&filter[profile][_eq]=" + USERPROFILE_TYPE_AGENT
+  urlcomplete += "&fields[]=*,aps_town_hall.*"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_create_agent = (async (agent_data) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER
+  try {
+    agent_data.code = genUserCode()
+    agent_data.username = agent_data.email
+    agent_data.password = "12341234"
+    agent_data.profile = USERPROFILE_TYPE_AGENT
+    agent_data.status = true
+    agent_data.aps_town_hall = agent_data.town_hall
+    let response = await axios.post(urlcomplete, agent_data)
+    if (response.status == 200 || response.status == 201 || response.status == 204) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    error = err.response.data ? err.response.data.errors[0].message : err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
 const directus_retrieve_folder = (async (folder_id) => {
   let result = {
     success: false
@@ -922,6 +985,7 @@ const directus_list_intermed_folders = (async (filters) => {
   let result = {
     success: false
   }
+  console.log(filters);
 
   let error = ""
 
@@ -934,6 +998,8 @@ const directus_list_intermed_folders = (async (filters) => {
     let response = await axios.get(urlcomplete)
     if (response.status == 200) {
       let rdata = response.data
+
+      console.log(rdata);
 
       let folders = []
       const folder_ids = rdata.data.map(folder_actor => folder_actor.folder)
@@ -1053,6 +1119,98 @@ const directus_filter_folder_actor = (async (actor, folder_ids) => {
   return result
 })
 
+const directus_list_town_hall = (async () => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_TOWN_HALL + "?sort=-id&filter[status][_eq]=true"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    console.log(err);
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_list_town_hall_document_types = (async () => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE + "?sort=id&filter[status][_eq]=true"
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      result.success = true
+      // result.data = rdata.data.map(town_hall => town_hall.document_types)
+      result.data = rdata.data
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    console.log(err);
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
+const directus_retrieve_town_hall_document_type = (async (document_type_id) => {
+  let result = {
+    success: false
+  }
+
+  let error = ""
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE + "?limit=1&filter[id][_eq]=" + document_type_id
+  try {
+    let response = await axios.get(urlcomplete)
+    if (response.status == 200) {
+      let rdata = response.data
+      if (rdata.data.length == 1) {
+        result.success = true
+        result.data = rdata.data[0]
+      } else {
+        error = "Le type de document n'existe pas"
+      }
+    } else {
+      error = response.data.message
+    }
+  } catch (err) {
+    console.log(err);
+    error = err.message
+  }
+
+  if (error != "") {
+    result.message = error
+  }
+
+  return result
+})
+
 module.exports = {
   control_service_data,
   convertImageToPdf,
@@ -1073,10 +1231,15 @@ module.exports = {
   directus_create_intermed,
   directus_list_clients,
   directus_create_client,
+  directus_list_agents,
+  directus_create_agent,
   directus_retrieve_folder,
   directus_list_folders,
   directus_list_intermed_folders,
   directus_search_folder,
   directus_create_folder_actor,
-  directus_filter_folder_actor
+  directus_filter_folder_actor,
+  directus_list_town_hall,
+  directus_list_town_hall_document_types,
+  directus_retrieve_town_hall_document_type
 }

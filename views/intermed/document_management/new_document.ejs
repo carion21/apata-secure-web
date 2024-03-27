@@ -26,10 +26,21 @@
     <% if (locals.message) { %>
       <div class="alert alert-success">
         <strong>Information!</strong> <%= locals.message %>
-        <a class="btn btn-primary btn-sm"
-          href="<%= routedebase %>/folder_management/view_folder/<%= vfolder.id %>">
-          Consulter le folder associé
-        </a>
+        <div class="row justify-content-end">
+          <div class="col-md-6">
+            <a class="btn btn-primary btn-sm"
+              href="<%= routedebase %>/folder_management/view_folder/<%= vfolder.id %>">
+              Consulter le folder associé
+            </a>
+          </div>
+          <div class="col-md-6">
+            <a class="btn btn-primary btn-sm"
+              href="<%= routedebase %>/folder_management/new_document">
+              Ajouter un autre document
+            </a>
+          </div>
+        </div>
+        
       </div>
     <% } %>
 

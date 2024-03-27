@@ -12,22 +12,33 @@ class Consts {
     static USERPROFILE_TYPE_ADMIN = 6;
     static USERPROFILE_TYPE_CLIENT = 7;
     static USERPROFILE_TYPE_INTERMED = 8;
+    static USERPROFILE_TYPE_AGENT = 9;
 
     static USERPROFILE_TYPES = [
         Consts.USERPROFILE_TYPE_ADMIN,
-        Consts.USERPROFILE_TYPE_INTERMED
+        Consts.USERPROFILE_TYPE_INTERMED,
+        Consts.USERPROFILE_TYPE_AGENT,
     ];
 
     static DEFAULT_PROFILE_ADMIN = "admin";
     static DEFAULT_PROFILE_INTERMED = "intermed";
+    static DEFAULT_PROFILE_AGENT = "agent";
 
     static DEFAULT_PROFILES = [
         Consts.DEFAULT_PROFILE_ADMIN,
-        Consts.DEFAULT_PROFILE_INTERMED
+        Consts.DEFAULT_PROFILE_INTERMED,
+        Consts.DEFAULT_PROFILE_AGENT,
     ];
     
     static DEFAULT_ROUTE_ADMIN = "/"+Consts.DEFAULT_PROFILE_ADMIN;
     static DEFAULT_ROUTE_INTERMED = "/"+Consts.DEFAULT_PROFILE_INTERMED;
+    static DEFAULT_ROUTE_AGENT = "/"+Consts.DEFAULT_PROFILE_AGENT;
+
+    static DEFAULT_ROUTES = {
+        [Consts.USERPROFILE_TYPE_ADMIN]: Consts.DEFAULT_ROUTE_ADMIN,
+        [Consts.USERPROFILE_TYPE_INTERMED]: Consts.DEFAULT_ROUTE_INTERMED,
+        [Consts.USERPROFILE_TYPE_AGENT]: Consts.DEFAULT_ROUTE_AGENT,
+    };
 
     static DEFAULT_TYPES = [
         "string",
@@ -68,6 +79,8 @@ class Consts {
     static ROUTE_OF_DIRECTUS_FOR_APS_PROJECT="/items/aps_project_type"
     static ROUTE_OF_DIRECTUS_FOR_APS_FOLDER="/items/aps_folder"
     static ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR="/items/aps_folder_actor"
+    static ROUTE_OF_DIRECTUS_FOR_TOWN_HALL="/items/aps_town_hall"
+    static ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE="/items/aps_town_hall_document_type"
 
 
 
@@ -76,6 +89,7 @@ class Consts {
         "security_login",
         "admin_new_client",
         "admin_new_intermed",
+        "admin_new_agent",
         "admin_account_details",
         "admin_security",
         "intermed_search_folder",
@@ -83,6 +97,9 @@ class Consts {
         "intermed_edit_folder",
         "intermed_account_details",
         "intermed_security",
+        "agent_new_document",
+        "agent_account_details",
+        "agent_security",
     ];
 
     static SERVICE_TYPES_FIELDS = {
@@ -101,6 +118,11 @@ class Consts {
             "fields": ["lastname", "firstname", "email", "phone", "profile", "project"],
             "types": ["string", "string", "string_email", "string_integer", "string_integer", "string_integer"],
             "required": ["lastname", "firstname", "phone", "profile", "project"]
+        },
+        "admin_new_agent": {
+            "fields": ["lastname", "firstname", "email", "phone", "town"],
+            "types": ["string", "string", "string_email", "string_integer", "string_integer"],
+            "required": ["lastname", "firstname", "phone", "town"]
         },
         "admin_account_details": {
             "fields": ["lastname", "firstname", "email", "phone"],
@@ -136,7 +158,22 @@ class Consts {
             "fields": ["current_password", "new_password", "confirm_new_password"],
             "types": ["string", "string", "string"],
             "required": ["current_password", "new_password", "confirm_new_password"]
-        }
+        },
+        "agent_new_document": {
+            "fields": ["document_type"],
+            "types": ["string_integer"],
+            "required": ["document_type"]
+        },
+        "agent_account_details": {
+            "fields": ["lastname", "firstname", "email", "phone"],
+            "types": ["string", "string", "string_email", "string_integer"],
+            "required": ["lastname", "firstname", "phone"]
+        },
+        "agent_security": {
+            "fields": ["current_password", "new_password", "confirm_new_password"],
+            "types": ["string", "string", "string"],
+            "required": ["current_password", "new_password", "confirm_new_password"]
+        },
     };
 
 }

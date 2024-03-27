@@ -11,7 +11,7 @@
   </div>
 
   <form class="needs-validation border-bottom pb-3 pb-lg-4"
-    action="<%= routedebase %>/intermed_management/new_intermed"
+    action="<%= routedebase %>/agent_management/new_agent"
     method="POST"
     novalidate>
 
@@ -21,32 +21,18 @@
       </div>
     <% } %>
 
-    <div class="row">
-      <div class="col-md-6 mb-3">
+    <div class="row pb-2">
+      <div class="col-sm-12 mb-3">
         <label class="form-label" for="validationCustom03">Profil</label>
-        <select name="profile" class="form-select" id="validationCustom03" required>
-          <option value="">Choisissez un profil...</option>
-          <% for (pf of profiles) { %>
-            <option value="<%= pf.id %>"><%= pf.label %></option>
+        <select name="town" class="form-select" id="validationCustom03" required>
+          <option value="">Choisissez une mairie...</option>
+          <% for (tw of towns) { %>
+            <option value="<%= tw.id %>"><%= tw.label %></option>
           <% } %>
         </select>
         <div class="invalid-feedback">S'il vous plaît entrez un profil valide!</div>
         <div class="valid-feedback">Looks good!</div>
       </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label" for="validationCustom04">Projet</label>
-        <select name="project" class="form-select" id="validationCustom04" required>
-          <option value="">Choisissez un projet...</option>
-          <% for (pr of projects) { %>
-            <option value="<%= pr.id %>"><%= pr.label %></option>
-          <% } %>
-        </select>
-        <div class="invalid-feedback">S'il vous plaît entrez un projet valide!</div>
-        <div class="valid-feedback">Looks good!</div>
-      </div>
-    </div>
-
-    <div class="row pb-2">
       <div class="col-sm-6 mb-4">
         <label for="fn" class="form-label fs-base">
           Nom
@@ -67,7 +53,7 @@
         </label>
         <input type="text" id="sn" class="form-control form-control-lg"
           name="lastname"
-          value="<% if (locals.rbody) { %><%= rbody.firstname %><% } %>"
+          value="<% if (locals.rbody) { %><%= rbody.lastname %><% } %>"
           required>
         <div class="invalid-feedback">
           S'il vous plaît entrez au moins un prénom!

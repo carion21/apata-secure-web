@@ -1,17 +1,11 @@
-<% extend('../base_admin') %>
+<% extend('../base_agent') %>
 
-<!-- Basic info -->
+  <!-- Basic info -->
   <h2 class="h5 text-primary mb-4">
     Informations de base
   </h2>
-
-  <div class="alert alert-warning">
-    <strong>Attention!</strong>
-    Le mot de passe par défaut sera le `12345678`.
-  </div>
-
   <form class="needs-validation border-bottom pb-3 pb-lg-4"
-    action="<%= routedebase %>/client_management/new_client"
+    action="<%= routedebase %>/user_management/account_details"
     method="POST"
     novalidate>
 
@@ -25,51 +19,46 @@
       <div class="col-sm-6 mb-4">
         <label for="fn" class="form-label fs-base">
           Nom
-          <span class="text-danger">*</span>
         </label>
         <input type="text" id="fn" class="form-control form-control-lg"
           name="firstname"
-          value="<% if (locals.rbody) { %><%= rbody.firstname %><% } %>"
+          value="<% if (locals.rbody) { %><%= rbody.firstname %><% } else { %><%= user_connected.firstname %><% } %>"
           required>
         <div class="invalid-feedback">
-          S'il vous plaît entrez un nom!
+          S'il vous plaît entrez votre nom!
         </div>
       </div>
       <div class="col-sm-6 mb-4">
         <label for="sn" class="form-label fs-base">
           Prénom
-          <span class="text-danger">*</span>
         </label>
         <input type="text" id="sn" class="form-control form-control-lg"
           name="lastname"
-          value="<% if (locals.rbody) { %><%= rbody.lastname %><% } %>"
+          value="<% if (locals.rbody) { %><%= rbody.firstname %><% } else { %><%= user_connected.lastname %><% } %>"
           required>
         <div class="invalid-feedback">
-          S'il vous plaît entrez au moins un prénom!
+          S'il vous plaît entrez votre prénom!
         </div>
       </div>
       <div class="col-sm-6 mb-4">
         <label for="phone" class="form-label fs-base">
-          Numéro de téléphone
-          <span class="text-danger">*</span>
-          <small class="text-muted">(10 chiffres)</small>
+          Numéro de téléphone <small class="text-muted">(10 chiffres)</small>
         </label>
         <input type="number" id="phone" class="form-control form-control-lg"
           name="phone"
           minlength="10"
           maxlength="10"
-          value="<% if (locals.rbody) { %><%= rbody.phone %><% } %>"
+          value="<% if (locals.rbody) { %><%= rbody.phone %><% } else { %><%= user_connected.phone %><% } %>"
           required>
       </div>
       <div class="col-sm-6 mb-4">
         <label for="email" class="form-label fs-base">
-          Adresse email 
-          <span class="text-danger">*</span>
+          Adresse email <small class="text-muted">(optionnelle)</small>
         </label>
-        <input type="email" id="email" name="email" class="form-control form-control-lg" 
-          value="<% if (locals.rbody) { %><%= rbody.email %><% } %>">
+        <input type="email" id="email" class="form-control form-control-lg" 
+          value="<% if (locals.rbody) { %><%= rbody.email %><% } else { %><%= user_connected.email %><% } %>">
         <div class="invalid-feedback">
-          S'il vous plaît entrez une adresse email!
+          S'il vous plaît entrez votre adresse email!
         </div>
       </div>
     </div>
@@ -78,7 +67,7 @@
         Annuler
       </button>
       <button type="submit" class="btn btn-primary">
-        Enregistrer
+        Sauvegarder les modifications
       </button>
     </div>
   </form>

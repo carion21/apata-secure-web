@@ -1,0 +1,70 @@
+<div class="modal fade" id="details_<%=d.code %>" tabindex="-" role="dialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Document No : <%= d.code %>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Light table with hoverable rows -->
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <tbody>
+              <tr>
+                <th>Code</th>
+                <td><%= d.code %></td>
+              </tr>
+              <tr>
+                <th>Titre</th>
+                <td><%= d.title || "Non défini" %></td>
+              </tr>
+              <tr>
+                <th>Fournisseur</th>
+                <td><%= d.user.lastname %> <%= d.user.firstname %></td>
+              </tr>
+              <tr>
+                <th>Créé le</th>
+                <td><%= moment(d.created_at).format('DD/MM/YYYY HH:mm:ss') %></td>
+              </tr>
+              <tr>
+                <th>Document original</th>
+                <td>
+                  <a href="/uploads/<%= d.input_path %>" target="_blank">
+                    <i class="bx bxs-file-pdf"></i>
+                    <i class="bx bxs-lock-open"></i>
+                     <%= d.input_path %>
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <th>Document securisé</th>
+                <td>
+                  <a href="/uploads/<%= d.output_path %>" target="_blank">
+                    <i class="bx bxs-file-pdf"></i>
+                    <i class="bx bxs-lock"></i>
+                    <%= d.output_path %>
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <th>QR Code associé</th>
+                <td>
+                  <img src="<%= d.qrcode_link %>" alt="">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

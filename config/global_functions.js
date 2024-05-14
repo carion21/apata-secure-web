@@ -343,59 +343,7 @@ const convertImageToPdf = (async (imagePath, pdfPath) => {
 
 const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath) => {
   // Charger le PDF
-  const pdfBytes = await fs.promises.readFile(pdfPath);
-
-  let pages = []
-  let pdfDoc = null
-
-  const extension = pdfPath.split('.').pop()
-  if (['png', 'jpg', 'jpeg'].includes(extension)) {
-    // convert image to pdf
-
-    const imageBytes = fs.readFileSync(pdfPath);
-    console.log(imageBytes);
-    // pdfDoc = await PDFDocument.create();
-    // const image = await pdfDoc.embedPng(imageBytes);
-    // console.log(image.width, image.height);
-    // const page = pdfDoc.addPage([image.width, image.height]);
-    // page.drawImage(image, {
-    //   x: 0,
-    //   y: 0,
-    // });
-    // pages = pdfDoc.getPages();
-  } else {
-    // Créer un nouveau document PDF
-    pdfDoc = await PDFDocument.load(pdfBytes);
-    pages = pdfDoc.getPages();
-  }
-
-  // Créer le code QR
-  // const qr_png = qr.imageSync(qrCodeText, { type: 'png' });
-  // console.log(qr_png);
-  const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
-
-  // Parcourir chaque page du PDF
-  for (let i = 0; i < pages.length; i++) {
-    const { width, height } = pages[i].getSize();
-    const qrCodeSize = 75; // Taille du code QR
-    const x = width - qrCodeSize - 10; // 20 pixels de marge depuis le bord droit
-    const y = 10; // 20 pixels de marge depuis le bord supérieur
-
-    // Ajouter le code QR à la page
-    pages[i].drawImage(qrImage, {
-      x,
-      y,
-      width: qrCodeSize,
-      height: qrCodeSize,
-    });
-  }
-
-  // Écrire le fichier PDF de sortie
-  const modifiedPdfBytes = await pdfDoc.save();
-  await fs.promises.writeFile(outputPath, modifiedPdfBytes);
-  // return buffer
-  const docbuff = await fs.promises.readFile(outputPath)
-  return docbuff
+  
 })
 
 const directus_retrieve_user = (async (username) => {

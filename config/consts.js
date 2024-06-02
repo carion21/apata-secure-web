@@ -3,7 +3,7 @@ class Consts {
     static NLIMIT = 10;
 
     static PORT_SYSTEM = 6055
-    static APP_NAME = "Apata Secure"
+    static APP_NAME = "SNAV"
     static APP_AUTHOR = "Carion21"
     static APP_VERSION = "1.0.0"
     static APP_DESCRIPTION = "Système de signature et d'authentification sécurisé de documents électroniques"

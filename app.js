@@ -16,6 +16,7 @@ const AdminController = require('./controllers/AdminController');
 const AgentController = require('./controllers/AgentController');
 const IntermedController = require('./controllers/IntermedController');
 const SecurityController = require('./controllers/SecurityController');
+const MobileController = require('./controllers/MobileController');
 const { APP_NAME, APP_DESCRIPTION, USERPROFILE_TYPE_CLIENT, APP_VERSION, USERPROFILE_TYPE_ADMIN, USERPROFILE_TYPE_INTERMED, USERPROFILE_TYPE_AGENT } = require('./config/consts');
 const { directus_retrieve_user } = require('./config/global_functions');
 
@@ -232,6 +233,14 @@ app.use(
     console.log("__SecurityController______________________________")
     next()
   }, SecurityController
+)
+
+app.use(
+  '/mobile',
+  (req, res, next) => {
+    console.log("__MobileController______________________________")
+    next()
+  }, MobileController
 )
 
 // catch 404 and forward to error handler

@@ -25,14 +25,19 @@ activeSidebare(tabside[idbloc].elements, index)
 
 router.get('/', async function (req, res, next) {
   let filters = {
-    rexto_entity: req.session.userdata.rexto_entity
+    rexto_entity: req.session.userdata.rexto_entity,
+    limit:5,
+    show_user:true
   }
 
   let documents = []
   let r_dts_documents = await directus_list_documents(filters)
+  
   if (r_dts_documents.success) {
     documents = r_dts_documents.data
   }
+
+  console.log("docs",documents[0])
 
   res.render(
     profile + "/" + tabside[idbloc].elements[index].template, {

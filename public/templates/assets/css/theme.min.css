@@ -103,6 +103,10 @@ body {
   display: inline-block !important;
   max-width: 100% !important; /* Adjust as needed */
 }
+
+.name_app{
+  color:#ffb90b ;
+}
 hr {
   margin: 0 0;
   color: var(--si-border-color);

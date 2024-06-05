@@ -9,6 +9,7 @@ const upload = multer({ storage: storage });
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode, generateHash } = require('../../../config/utils');
 const { DEFAULT_PROFILE_ADMIN } = require('../../../config/consts');
 const { directus_create_document, generate_qr_code, add_qr_code_to_pdf, convertImageToPdf, upload_file_to_server } = require('../../../config/global_functions');
+const { title } = require('process');
 const router = express.Router();
 
 const moment = getMoment();
@@ -43,8 +44,10 @@ router.post('/:id', upload.single('document'), async function (req, res) {
         input_path: uploadResult.data.baseObjectName,
         output_path: uploadResult.data.secureObjectName,
         qrcode_link: uploadResult.data.qrCodeLink,
+        title: uploadResult.data.name,
         created_at: moment().format("YYYY-MM-DD HH:mm:ss"),
         hash: uploadResult.data.secureHash,
+        folder: req.body.folder,
       }
 
       let r_dts_new_document = await directus_create_document(doc_data)

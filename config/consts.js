@@ -17,6 +17,7 @@ class Consts {
     static APP_SERVER_FICHIER_ROUTE_LOGIN = '/auth/signin'
     static APP_SERVER_FICHIER_ROUTE_UPLOAD = '/document'
     static APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE = '/document/bycode/'
+    static APP_SERVER_FICHIER_ROUTE_VERIFY_DOC = '/document/verify'
 
     static USERPROFILE_TYPE_UNDEFINED = 0;
     static USERPROFILE_TYPE_ADMIN = 6;

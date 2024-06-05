@@ -116,7 +116,8 @@ router.post('/', upload.single('document'), async function (req, res, next) {
       }
 
     } else {
-      error = r_gen_qrcode.message
+      // error = r_gen_qrcode.message
+      error = uploadResult.message
     }
   } else {
     error = bcontrol.message

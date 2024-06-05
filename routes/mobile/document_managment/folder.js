@@ -77,7 +77,7 @@ const newFolder = async (req, res, next) => {
         // res.status(200).json("data", response);
         console.log("res",response);
         if (response.status === 200 ) {
-            result.success = true;
+            result.success = true;   
             result.message = "Dossier créé";
             // res.status(200).json(result);
         

@@ -1,4 +1,4 @@
-const {APP_SERVER_FICHIER_APP_UID,APP_SERVER_FICHIER_LOGIN_PASSWORD, APP_SERVER_FICHIER_LOGIN_USERNAME, APP_SERVER_FICHIER_ROUTE_LOGIN,APP_SERVER_FICHIER_ROUTE_UPLOAD,APP_SERVER_FICHIER_URL, SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, USERPROFILE_TYPE_AGENT, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE, APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE, } = require("./consts")
+const {APP_SERVER_FICHIER_ROUTE_VERIFY_DOC,APP_SERVER_FICHIER_APP_UID,APP_SERVER_FICHIER_LOGIN_PASSWORD, APP_SERVER_FICHIER_LOGIN_USERNAME, APP_SERVER_FICHIER_ROUTE_LOGIN,APP_SERVER_FICHIER_ROUTE_UPLOAD,APP_SERVER_FICHIER_URL, SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, USERPROFILE_TYPE_AGENT, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE, APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE, } = require("./consts")
 const { isString, isInteger, isBoolean, isObject, isArray, isNumber, isArrayOfString, isArrayOfInteger, getMoment, getDirectusUrl, genUserCode } = require("./utils")
 const FormData = require('form-data');
 const axios = require('axios');
@@ -401,7 +401,57 @@ const upload_file_to_server = async (file) => {
   return result;
 };
 
+const auth_file_to_server = async (file, documentCode) => {
+  let result = {
+    success: false,
+    message: ""
+  };
 
+  const urlComplete = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_VERIFY_DOC;
+  const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
+
+  const formData = new FormData();
+  formData.append('file', file.buffer, { filename: file.originalname, contentType: 'application/pdf' });
+  formData.append('documentCode', documentCode);
+
+
+  try {
+    const responseLogin = await axios.post(urlLogin, {
+      username: APP_SERVER_FICHIER_LOGIN_USERNAME,
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+    });
+
+    if (responseLogin.status === 201) {
+      const token = responseLogin.data.data.jwt;
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          ...formData.getHeaders() // Assurez-vous que formData est une instance du module 'form-data'
+        }
+      };
+
+      try {
+        const response = await axios.post(urlComplete, formData, config);
+        if (response.status === 201) {
+          result.success = true;
+          result.data = response.data.data;
+        } else {
+          result.message = response.data.message;
+        }
+      } catch (error) {
+        console.error("Error during verify file:", error);
+        result.message = error.message;
+      }
+    } else {
+      result.message = responseLogin.data.message;
+    }
+  } catch (err) {
+    console.error("Error during login:", err);
+    result.message = err.message;
+  }
+
+  return result;
+};
 
 
 
@@ -460,6 +510,7 @@ const directus_update_user = (async (user_data) => {
       error = response.data.message
     }
   } catch (err) {
+    console.log(err.response.data);
     error = err.message
   }
 
@@ -581,6 +632,15 @@ const directus_list_documents = async (filters) => {
   if (filters.user) {
     urlcomplete += "&filter[user][_eq]=" + filters.user;
   }
+  if (filters.limit) {
+    urlcomplete += "&limit=" + filters.limit;
+  }
+
+  if (filters.show_user) {
+    urlcomplete += "&fields[]=*,user.*" ;
+  }
+
+  console.log("urlcomplete", urlcomplete);
 
   try {
     const responseLogin = await axios.post(urlLogin, {
@@ -608,8 +668,12 @@ const directus_list_documents = async (filters) => {
           try {
             let responseDoc = await axios.get(url, config);
             if (responseDoc.status === 200) {
-              documents[i].input_path = responseDoc.data.data.baseObjectUrl;
-              documents[i].output_path = responseDoc.data.data.secureObjectUrl;
+              // documents[i].input_path = responseDoc.data.data.baseObjectUrl;
+              // documents[i].output_path = responseDoc.data.data.secureObjectUrl;
+              //create two new attributes in the document object to store the input and output paths
+              console.log("responseDoc.data.data", responseDoc.data.data);
+              documents[i].input_url = responseDoc.data.data.baseObjectUrl;
+              documents[i].output_url = responseDoc.data.data.secureObjectUrl;
             }
           } catch (err) {
             console.log("error retrieving document path for", code, ":", err.message);
@@ -644,17 +708,56 @@ const directus_list_documents_by_folder = (async (folder_id) => {
 
   let error = ""
 
+  const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
+  const urlgetDocFromAppServerByCode = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE;
+
   let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[folder][_eq]=" + folder_id
   urlcomplete += "&fields[]=*,user.*"
 
   try {
-    let response = await axios.get(urlcomplete)
-    if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
-    } else {
-      error = response.data.message
+
+    const responseLogin = await axios.post(urlLogin, {
+      username: APP_SERVER_FICHIER_LOGIN_USERNAME,
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+    });
+    if (responseLogin.status === 201) {
+      const token = responseLogin.data.data.jwt;
+      const config = {
+        headers: { 'Authorization': `Bearer ${token}` }
+      };
+
+      const response = await axios.get(urlcomplete);
+      if (response.status === 200) {
+        let documents = response.data.data;
+        console.log("documents.length", documents.length);
+        
+        for (let i = 0; i < documents.length; i++) {
+          let doc = documents[i];
+          let code = doc.code;
+          let url = urlgetDocFromAppServerByCode + code;
+          console.log("url", url);
+
+          try {
+            let responseDoc = await axios.get(url, config);
+            if (responseDoc.status === 200) {
+              // documents[i].input_path = responseDoc.data.data.baseObjectUrl;
+              // documents[i].output_path = responseDoc.data.data.secureObjectUrl;
+              //create two new attributes in the document object to store the input and output paths
+              console.log("responseDoc.data.data", responseDoc.data.data);
+              documents[i].input_url = responseDoc.data.data.baseObjectUrl;
+              documents[i].output_url = responseDoc.data.data.secureObjectUrl;
+            }
+          } catch (err) {
+            console.log("error retrieving document path for", code, ":", err.message);
+          }
+        }
+
+        result.success = true;
+        result.data = documents;
+        console.log("documents", result.data);
+      } else {
+        error = response.data.message;
+      }
     }
   } catch (err) {
     error = err.message
@@ -1285,5 +1388,6 @@ module.exports = {
   directus_list_town_hall,
   directus_list_town_hall_document_types,
   directus_retrieve_town_hall_document_type,
-  upload_file_to_server
+  upload_file_to_server,
+  auth_file_to_server
 }

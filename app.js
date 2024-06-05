@@ -7,6 +7,7 @@ const redis = require('redis');
 const redisStore = require('connect-redis')(session)
 const morgan = require('morgan');
 const winston = require('winston');
+const fileUpload = require('express-fileupload');
 
 const fs = require('fs');
 
@@ -59,6 +60,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(express.json());
+// app.use(fileUpload());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));

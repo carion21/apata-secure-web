@@ -32,7 +32,7 @@
               <tr>
                 <th>Document original</th>
                 <td>
-                  <a href="/uploads/<%= d.input_path %>" target="_blank">
+                  <a href="<%= d.input_path %>" target="_blank" class="truncate">
                     <i class="bx bxs-file-pdf"></i>
                     <i class="bx bxs-lock-open"></i>
                      <%= d.input_path %>
@@ -42,7 +42,7 @@
               <tr>
                 <th>Document securisé</th>
                 <td>
-                  <a href="/uploads/<%= d.output_path %>" target="_blank">
+                  <a href="<%= d.output_path %>" target="_blank" class="truncate">
                     <i class="bx bxs-file-pdf"></i>
                     <i class="bx bxs-lock"></i>
                     <%= d.output_path %>

@@ -8,6 +8,16 @@ class Consts {
     static APP_VERSION = "1.0.0"
     static APP_DESCRIPTION = "Système de signature et d'authentification sécurisé de documents électroniques"
 
+    static APP_SERVER_FICHIER_URL = 'http://167.86.106.97:8055'
+    static APP_SERVER_FICHIER_LOGIN_USERNAME = 'ba@snav.com'
+    static APP_SERVER_FICHIER_LOGIN_PASSWORD = 'rtx2c7Wa3jTRuNsqnBhmCd'
+    static APP_SERVER_FICHIER_APP_UID = '0e1ddf69-2774-481d-9f35-3b9dfdaf91cd'
+
+
+    static APP_SERVER_FICHIER_ROUTE_LOGIN = '/auth/signin'
+    static APP_SERVER_FICHIER_ROUTE_UPLOAD = '/document'
+    static APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE = '/document/bycode/'
+
     static USERPROFILE_TYPE_UNDEFINED = 0;
     static USERPROFILE_TYPE_ADMIN = 6;
     static USERPROFILE_TYPE_CLIENT = 7;

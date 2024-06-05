@@ -4,7 +4,7 @@ const axios = require('axios');
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genUserCode } = require('../../../config/utils');
 const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
-const { directus_list_orders, directus_count_orders, directus_retrieve_user, directus_create_client, control_service_data } = require('../../../config/global_functions');
+const {directus_create_client} = require('../../../config/global_functions');
 const router = express.Router();
 
 const urlapi = getDirectusUrl();
@@ -20,13 +20,14 @@ router.post('/', async function (req, res, next) {
     // let bcontrol = control_service_data(SERVICE_TYPE, body)
 
     let error = ""
-
-
+    console.log(body)
+    console.log("sds",directus_create_client );
     let r_dts_new_client = await directus_create_client({
         lastname: body.lastname,
         firstname: body.firstname,
         email: body.email,
         phone: body.phone,
+        password: body.password,
     })
 
     if (r_dts_new_client.success) {

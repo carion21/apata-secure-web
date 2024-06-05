@@ -1,6 +1,6 @@
-const { SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, USERPROFILE_TYPE_AGENT, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE, } = require("./consts")
+const {APP_SERVER_FICHIER_APP_UID,APP_SERVER_FICHIER_LOGIN_PASSWORD, APP_SERVER_FICHIER_LOGIN_USERNAME, APP_SERVER_FICHIER_ROUTE_LOGIN,APP_SERVER_FICHIER_ROUTE_UPLOAD,APP_SERVER_FICHIER_URL, SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, USERPROFILE_TYPE_AGENT, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE, APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE, } = require("./consts")
 const { isString, isInteger, isBoolean, isObject, isArray, isNumber, isArrayOfString, isArrayOfInteger, getMoment, getDirectusUrl, genUserCode } = require("./utils")
-
+const FormData = require('form-data');
 const axios = require('axios');
 const validator = require('email-validator');
 
@@ -10,6 +10,8 @@ const { Image } = require('pdf-lib');
 const fs = require('fs');
 const path = require('path');
 const qr = require('qr-image');
+const { token } = require("morgan");
+// const { head } = require("../routes/mobile/auth/register");
 
 const urlapi = getDirectusUrl();
 const moment = getMoment()
@@ -346,6 +348,63 @@ const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath
   
 })
 
+const upload_file_to_server = async (file) => {
+  let result = {
+    success: false,
+    message: ""
+  };
+
+  const urlComplete = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_UPLOAD;
+  const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
+
+  const formData = new FormData();
+  formData.append('file', file.buffer, { filename: file.originalname, contentType: 'application/pdf' });
+  formData.append('applicationUuid', APP_SERVER_FICHIER_APP_UID);
+  formData.append('name', file.originalname);
+  formData.append('description', "document");
+
+  try {
+    const responseLogin = await axios.post(urlLogin, {
+      username: APP_SERVER_FICHIER_LOGIN_USERNAME,
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+    });
+
+    if (responseLogin.status === 201) {
+      const token = responseLogin.data.data.jwt;
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          ...formData.getHeaders() // Assurez-vous que formData est une instance du module 'form-data'
+        }
+      };
+
+      try {
+        const response = await axios.post(urlComplete, formData, config);
+        if (response.status === 201) {
+          result.success = true;
+          result.data = response.data.data;
+        } else {
+          result.message = response.data.message;
+        }
+      } catch (error) {
+        console.error("Error during file upload:", error);
+        result.message = error.message;
+      }
+    } else {
+      result.message = responseLogin.data.message;
+    }
+  } catch (err) {
+    console.error("Error during login:", err);
+    result.message = err.message;
+  }
+
+  return result;
+};
+
+
+
+
+
 const directus_retrieve_user = (async (username) => {
   let result = {
     success: false
@@ -509,37 +568,74 @@ const directus_verify_hash = (async (password, hash) => {
 })
 
 
-const directus_list_documents = (async (filters) => {
+const directus_list_documents = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+    data: []
+  };
 
-  let error = ""
-
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[status][_eq]=true"
-  urlcomplete += "&fields[]=*,user.*,folder.*"
+  let error = "";
+  const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
+  const urlgetDocFromAppServerByCode = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE;
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[status][_eq]=true";
   if (filters.user) {
-    urlcomplete += "&filter[user][_eq]=" + filters.user
+    urlcomplete += "&filter[user][_eq]=" + filters.user;
   }
+
   try {
-    let response = await axios.get(urlcomplete)
-    if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+    const responseLogin = await axios.post(urlLogin, {
+      username: APP_SERVER_FICHIER_LOGIN_USERNAME,
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+    });
+
+    if (responseLogin.status === 201) {
+      const token = responseLogin.data.data.jwt;
+      const config = {
+        headers: { 'Authorization': `Bearer ${token}` }
+      };
+
+      const response = await axios.get(urlcomplete);
+      if (response.status === 200) {
+        let documents = response.data.data;
+        console.log("documents.length", documents.length);
+        
+        for (let i = 0; i < documents.length; i++) {
+          let doc = documents[i];
+          let code = doc.code;
+          let url = urlgetDocFromAppServerByCode + code;
+          console.log("url", url);
+
+          try {
+            let responseDoc = await axios.get(url, config);
+            if (responseDoc.status === 200) {
+              documents[i].input_path = responseDoc.data.data.baseObjectUrl;
+              documents[i].output_path = responseDoc.data.data.secureObjectUrl;
+            }
+          } catch (err) {
+            console.log("error retrieving document path for", code, ":", err.message);
+          }
+        }
+
+        result.success = true;
+        result.data = documents;
+        console.log("documents", result.data);
+      } else {
+        error = response.data.message;
+      }
     } else {
-      error = response.data.message
+      error = "Failed to login or obtain token.";
     }
   } catch (err) {
-    error = err.message
+    error = err.message || "An error occurred during the API call.";
   }
 
-  if (error != "") {
-    result.message = error
+  if (error !== "") {
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+}
+
 
 const directus_list_documents_by_folder = (async (folder_id) => {
   let result = {
@@ -775,38 +871,37 @@ const directus_list_clients = (async (filters) => {
   return result
 })
 
-const directus_create_client = (async (client_data) => {
+async function directus_create_client(client_data) {
   let result = {
     success: false
-  }
+  };
+  let error = "";
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER;
 
-  let error = ""
-
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER
   try {
-    client_data.code = genUserCode()
-    client_data.username = client_data.email
-    client_data.password = "12341234"
-    client_data.profile = USERPROFILE_TYPE_CLIENT
-    client_data.status = true
-    let response = await axios.post(urlcomplete, client_data)
-    if (response.status == 200 || response.status == 201 || response.status == 204) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+    client_data.code = genUserCode();
+    client_data.username = client_data.email; // Assurez-vous que `genUserCode` est défini
+    client_data.password = client_data.password;
+    client_data.profile = USERPROFILE_TYPE_CLIENT;
+    client_data.status = true;
+    let response = await axios.post(urlcomplete, client_data);
+
+    if (response.status === 200 || response.status === 201 || response.status === 204) {
+      result.success = true;
+      result.data = response.data.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.response.data ? err.response.data.errors[0].message : err.message
+    error = err.response && err.response.data ? err.response.data.errors[0].message : err.message;
   }
 
-  if (error != "") {
-    result.message = error
+  if (error !== "") {
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+}
 
 const directus_list_agents = (async (filters) => {
   let result = {
@@ -1189,5 +1284,6 @@ module.exports = {
   directus_filter_folder_actor,
   directus_list_town_hall,
   directus_list_town_hall_document_types,
-  directus_retrieve_town_hall_document_type
+  directus_retrieve_town_hall_document_type,
+  upload_file_to_server
 }

@@ -109,6 +109,10 @@ const getDocumentsOfUser = async (req, res, next) => {
     res.json(result);
 };
 
+// const newDocument = async (req, res, next) => {
+
+
+
 
 router.get('/code/:documentCode', getDocumentByCode);
 router.get('/:folderId', getDocumentsOfFolder);

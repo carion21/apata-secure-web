@@ -1,164 +1,64 @@
 const express = require('express');
 const axios = require('axios');
+const fs = require('fs');
+const multer = require('multer'); 
+const path = require('path');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode, generateHash } = require('../../../config/utils');
-const { DEFAULT_PROFILE_ADMIN, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
-const { activeSidebare, getIndice } = require('../../../config/sidebare');
-const { directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf, convertImageToPdf } = require('../../../config/global_functions');
+const { DEFAULT_PROFILE_ADMIN } = require('../../../config/consts');
+const { directus_create_document, generate_qr_code, add_qr_code_to_pdf, convertImageToPdf, upload_file_to_server } = require('../../../config/global_functions');
 const router = express.Router();
 
-const fs = require('fs');
-
-const urlapi = getDirectusUrl();
 const moment = getMoment();
 
-const SERVICE_TYPE = "api_new_document"
+router.post('/:id', upload.single('document'), async function (req, res) {
+  const id = req.params.id;
+  let result = { success: false, message: "" };
 
-const profile = DEFAULT_PROFILE_ADMIN;
-const tabside = getTabSideBase(profile)
-const idbloc = 1
-const blocname = tabside[idbloc].texte
-const pagename = "Nouveau document"
-const template = "document_list"
-const routedebase = getRouteDeBase(profile)
-const index = getIndice(tabside[idbloc].elements, template)
-const page = tabside[idbloc].elements[index].texte
-activeSidebare(tabside[idbloc].elements, index)
+  console.log("ID:", id);
+  console.log("Uploaded file:", req.file);
 
-const multer = require("multer");
-const path = require("path");
-const { log } = require('console');
+  if (!isInteger(parseInt(id))) {
+    result.message = "Identifiant utilisateur invalide";
+    return res.status(400).json(result);
+  }
 
-var storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Uploads is the Upload_folder_name
-    cb(null, "public/uploads");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.fieldname + "-" + Date.now() + "." + file.originalname.split('.').pop());
-  },
-});
+  if (!req.file) {
+    result.message = "Aucun fichier n'a été téléchargé.";
+    return res.status(400).json(result);
+  }
 
-// Define the maximum size for uploading
-// picture i.e. 10 MB. it is optional
-const maxSize = 10 * 1000 * 1000;
+  try {
+    const file = req.file;
+    const uploadResult = await upload_file_to_server(file);
+    console.log("Upload result:", uploadResult.data);
+    if (uploadResult.success) {
+      result.success = true;
+      result.message = "Le document a été téléchargé avec succès.";
+      let doc_data = {
+        code: uploadResult.data.code,
+        user: parseInt(id),
+        input_path: uploadResult.data.baseObjectName,
+        output_path: uploadResult.data.secureObjectName,
+        qrcode_link: uploadResult.data.qrCodeLink,
+        created_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+        hash: uploadResult.data.secureHash,
+      }
 
-var upload = multer({
-  storage: storage,
-  limits: { fileSize: maxSize },
-  fileFilter: function (req, file, cb) {
-    // Set the filetypes, it is optional
-    var filetypes = /pdf|jpeg|jpg|png/;
-
-    var extname = filetypes.test(
-      path.extname(file.originalname).toLowerCase()
-    );
-
-    if (extname) {
-      return cb(null, true);
+      let r_dts_new_document = await directus_create_document(doc_data)
+      
+    } else {
+      result.message = uploadResult.message;
+      return res.status(500).json(result);
     }
 
-    cb(
-      "Error: File upload only supports the " +
-      "following filetypes - " +
-      filetypes
-    );
-  },
-
-}).single("document");
-
-router.post('/:id', async function (req, res, next) {
-  const id = req.params.id
-
-  let error = ""
-
-  let result = {
-    success: false
-  }
-
-
-  if (isInteger(parseInt(id))) {
-    upload(req, res, async function (err) {
-      if (err) {
-        error = err.toString()
-        result.message = error
-      } else {
-        let fileName = req.file.filename
-
-        const fileExtension = fileName.split('.').pop()
-
-        console.log(fileName);
-
-        if (fileExtension != "pdf") {
-          await convertImageToPdf("public/uploads/" + fileName, "public/uploads/" + fileName.replace(fileExtension, "pdf"))
-        }
-        fileName = fileName.replace(fileExtension, "pdf")
-
-        let creation_date = moment().format("YYYY-MM-DD HH:mm:ss")
-        let doc_code = genDocumentCode()
-
-        let r_gen_qrcode = await generate_qr_code({
-          stringdata: doc_code
-        })
-
-        if (r_gen_qrcode.success) {
-
-            // get buffer from qrcode link
-          let buff = await axios.get(r_gen_qrcode.link, {
-            responseType: 'arraybuffer'
-          })
-
-          let inputFile = fileName
-          let outputFile = "secure-" + fileName.replace("document-", "")
-          const docbuff = await add_qr_code_to_pdf(
-            "public/uploads/" + inputFile,
-            buff.data,
-            doc_code,
-            "public/uploads/" + outputFile
-          )
-
-          //  docbuff = await fs.promises.readFile("public/uploads/" + outputFile)
-          const hash  = generateHash(docbuff)
-
-          console.log(hash);
-
-          let doc_data = {
-            code: doc_code,
-            user: parseInt(id),
-            input_path: inputFile,
-            output_path: outputFile,
-            qrcode_link: r_gen_qrcode.link,
-            created_at: creation_date,
-            hash: hash
-          }
-
-          let r_dts_new_document = await directus_create_document(doc_data)
-
-          if (r_dts_new_document.success) {
-            result.success = true
-            result.message = "Document created"
-          } else {
-            error = r_dts_new_document.message
-            result.message = error
-          }
-
-        } else {
-          error = r_gen_qrcode.message
-        }
-
-      }
-
-      if (error) {
-        result.message = error
-      }
-
-      res.json(result);
-    });
-  } else {
-    result.message = "Invalid user id"
     res.json(result);
+  } catch (err) {
+    console.error('Erreur lors du traitement du fichier:', err);
+    res.status(500).json({ success: false, message: "Erreur lors du traitement du fichier" });
   }
-
 });
 
 module.exports = router;

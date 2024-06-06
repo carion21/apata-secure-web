@@ -914,12 +914,13 @@ const directus_retrieve_document = async (document_code) => {
     ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT +
     "?limit=1&filter[code][_eq]=" +
     document_code;
+    urlcomplete += "&fields[]=*,user.*";
   try {
     let response = await axios.get(urlcomplete);
     if (response.status == 200) {
       let rdata = response.data;
       result.success = true;
-      result.data = rdata.data;
+      result.data = rdata.data[0];
     } else {
       error = response.data.message;
     }
@@ -1713,7 +1714,7 @@ const directus_count_intermed_folders = async (intermed_id) => {
   return result;
 };
 
-const directus_count_intermed_documents = async (filters) => {
+const directus_count_intermed_documents = async (intermed_id) => {
   let result = {
     success: false,
   };
@@ -1721,7 +1722,7 @@ const directus_count_intermed_documents = async (filters) => {
   let error = "";
 
   let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT
-  urlcomplete += "?filter[user][_eq]=" + filters.intermed_id;
+  urlcomplete += "?filter[user][_eq]=" + intermed_id;
   urlcomplete += "&aggregate[count]=*";
 
   try {

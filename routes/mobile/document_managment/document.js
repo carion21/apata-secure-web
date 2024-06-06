@@ -1,6 +1,6 @@
 const axios = require('axios');
-const { getDirectusUrl  } = require('../../../config/utils');
-const { directus_list_documents, minayo_get_doc_by_code } = require('../../../config/global_functions');
+const { getDirectusUrl } = require('../../../config/utils');
+const { directus_list_documents, minayo_get_doc_by_code, directus_retrieve_document } = require('../../../config/global_functions');
 const express = require('express');
 const router = express.Router();
 const urlapi = getDirectusUrl();
@@ -111,36 +111,48 @@ const getDocumentsOfUser = async (req, res, next) => {
 };
 
 
-const getDocumentByCodeFromServer = async (req,res,next) => {
+const getDocumentByCodeFromServer = async (req, res, next) => {
     const documentCode = req.params.documentCode;
     let result = {
         success: false,
         message: ""
     };
+
     try {
         console.log("Fetching document with code:", documentCode);
-      let document = await minayo_get_doc_by_code(documentCode);
-      result.success = true;
-        result.message = "Document found";
-        result.document = document;
-     
+        let r_dts_documents = await directus_retrieve_document(documentCode);
+  
+        if (r_dts_documents.success) {
+            let dts_document = r_dts_documents.data;
+            let r_document = await minayo_get_doc_by_code(documentCode);
+            let document = r_document.data;
+            document["user"] = dts_document.user;
+            result.success = true;
+            result.message = "Document found";
+           
+            result.data = document;
+        } else {
+            result.message = r_dts_documents.message;
+        }
+        
+
     } catch (error) {
-      console.error("Error fetching document:", error.message);
+       
         result.message = error.message;
 
     }
 
     res.json(result);
-  };
+};
 
 // const newDocument = async (req, res, next) => {
 
 
 
 
-router.get('/code/:documentCode', getDocumentByCode);
+router.get('/code/:documentCode', getDocumentByCodeFromServer);
 router.get('/:folderId', getDocumentsOfFolder);
-router.get('/user/:userId', getDocumentsOfUser);                 
+router.get('/user/:userId', getDocumentsOfUser);
 // router.get('/doc/:documentCode', getDocumentByCode);
 
 module.exports = router;

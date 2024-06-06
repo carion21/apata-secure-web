@@ -117,6 +117,7 @@ router.post('/', upload.single('document'), async function (req, res, next) {
   let filters = {
     actor: req.session.userdata.id
   }
+  console.log("req.body", req.body)
 
   let result = {
     success: false,

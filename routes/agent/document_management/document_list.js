@@ -25,9 +25,11 @@ activeSidebare(tabside[idbloc].elements, index)
 
 router.get('/', async function (req, res, next) {
   let filters = {
-    user: req.session.userdata.id
+    user: req.session.userdata.id,
+    limit:5,
+    show_user:true
   }
-
+  
   let documents = []
   let r_dts_documents = await directus_list_documents(filters)
   if (r_dts_documents.success) {

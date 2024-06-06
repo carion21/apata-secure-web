@@ -25,7 +25,10 @@ activeSidebare(tabside[idbloc].elements, index)
 
 router.get('/', async function (req, res, next) {
   let filters = {
-    user: req.session.userdata.id
+    user: req.session.userdata.id,
+    limit:5,
+    show_user:true,
+    show_folder:true
   }
 
   let documents = []

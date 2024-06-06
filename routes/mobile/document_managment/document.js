@@ -1,5 +1,6 @@
 const axios = require('axios');
-const { getDirectusUrl } = require('../../../config/utils');
+const { getDirectusUrl  } = require('../../../config/utils');
+const { directus_list_documents, minayo_get_doc_by_code } = require('../../../config/global_functions');
 const express = require('express');
 const router = express.Router();
 const urlapi = getDirectusUrl();
@@ -109,6 +110,29 @@ const getDocumentsOfUser = async (req, res, next) => {
     res.json(result);
 };
 
+
+const getDocumentByCodeFromServer = async (req,res,next) => {
+    const documentCode = req.params.documentCode;
+    let result = {
+        success: false,
+        message: ""
+    };
+    try {
+        console.log("Fetching document with code:", documentCode);
+      let document = await minayo_get_doc_by_code(documentCode);
+      result.success = true;
+        result.message = "Document found";
+        result.document = document;
+     
+    } catch (error) {
+      console.error("Error fetching document:", error.message);
+        result.message = error.message;
+
+    }
+
+    res.json(result);
+  };
+
 // const newDocument = async (req, res, next) => {
 
 
@@ -116,6 +140,7 @@ const getDocumentsOfUser = async (req, res, next) => {
 
 router.get('/code/:documentCode', getDocumentByCode);
 router.get('/:folderId', getDocumentsOfFolder);
-router.get('/user/:userId', getDocumentsOfUser);
+router.get('/user/:userId', getDocumentsOfUser);                 
+router.get('/doc/:documentCode', getDocumentByCodeFromServer);
 
 module.exports = router;

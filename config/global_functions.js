@@ -1,313 +1,373 @@
-const {APP_SERVER_FICHIER_ROUTE_VERIFY_DOC,APP_SERVER_FICHIER_APP_UID,APP_SERVER_FICHIER_LOGIN_PASSWORD, APP_SERVER_FICHIER_LOGIN_USERNAME, APP_SERVER_FICHIER_ROUTE_LOGIN,APP_SERVER_FICHIER_ROUTE_UPLOAD,APP_SERVER_FICHIER_URL, SERVICE_TYPES_FIELDS, ROUTE_OF_DIRECTUS_FOR_USER, ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY, ROUTE_OF_DIRECTUS_TO_VERIFY_HASH, USERPROFILE_TYPE_CLIENT, ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT, QRGENERATOR_URL, ROUTE_OF_QRGENERATOR_TO_GENERATE, USERPROFILE_TYPE_INTERMED, ROUTE_OF_DIRECTUS_FOR_APS_PROFILE, ROUTE_OF_DIRECTUS_FOR_APS_PROJECT, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR, ROUTE_OF_DIRECTUS_FOR_APS_FOLDER, USERPROFILE_TYPE_AGENT, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL, ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE, APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE, } = require("./consts")
-const { isString, isInteger, isBoolean, isObject, isArray, isNumber, isArrayOfString, isArrayOfInteger, getMoment, getDirectusUrl, genUserCode } = require("./utils")
-const FormData = require('form-data');
-const axios = require('axios');
-const validator = require('email-validator');
+const {
+  APP_SERVER_FICHIER_ROUTE_VERIFY_DOC,
+  APP_SERVER_FICHIER_APP_UID,
+  APP_SERVER_FICHIER_LOGIN_PASSWORD,
+  APP_SERVER_FICHIER_LOGIN_USERNAME,
+  APP_SERVER_FICHIER_ROUTE_LOGIN,
+  APP_SERVER_FICHIER_ROUTE_UPLOAD,
+  APP_SERVER_FICHIER_URL,
+  SERVICE_TYPES_FIELDS,
+  ROUTE_OF_DIRECTUS_FOR_USER,
+  ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY,
+  ROUTE_OF_DIRECTUS_TO_VERIFY_HASH,
+  USERPROFILE_TYPE_CLIENT,
+  ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT,
+  QRGENERATOR_URL,
+  ROUTE_OF_QRGENERATOR_TO_GENERATE,
+  USERPROFILE_TYPE_INTERMED,
+  ROUTE_OF_DIRECTUS_FOR_APS_PROFILE,
+  ROUTE_OF_DIRECTUS_FOR_APS_PROJECT,
+  ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR,
+  ROUTE_OF_DIRECTUS_FOR_APS_FOLDER,
+  USERPROFILE_TYPE_AGENT,
+  ROUTE_OF_DIRECTUS_FOR_TOWN_HALL,
+  ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE,
+  APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE,
+} = require("./consts");
+const {
+  isString,
+  isInteger,
+  isBoolean,
+  isObject,
+  isArray,
+  isNumber,
+  isArrayOfString,
+  isArrayOfInteger,
+  getMoment,
+  getDirectusUrl,
+  genUserCode,
+} = require("./utils");
+const FormData = require("form-data");
+const axios = require("axios");
+const validator = require("email-validator");
 
-const { PDFDocument, rgb } = require('pdf-lib');
-const { degrees } = require('pdf-lib').degrees;
-const { Image } = require('pdf-lib');
-const fs = require('fs');
-const path = require('path');
-const qr = require('qr-image');
+const { PDFDocument, rgb } = require("pdf-lib");
+const { degrees } = require("pdf-lib").degrees;
+const { Image } = require("pdf-lib");
+const fs = require("fs");
+const path = require("path");
+const qr = require("qr-image");
 const { token } = require("morgan");
 // const { head } = require("../routes/mobile/auth/register");
 
 const urlapi = getDirectusUrl();
-const moment = getMoment()
+const moment = getMoment();
 
-
-const control_service_data = ((service_type_value, service_data) => {
+const control_service_data = (service_type_value, service_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
   try {
     if (isObject(service_data)) {
-      let authorized_services = Object.keys(SERVICE_TYPES_FIELDS)
+      let authorized_services = Object.keys(SERVICE_TYPES_FIELDS);
 
       if (authorized_services.includes(service_type_value)) {
         if (service_type_value == "undefined") {
-          result.success = true
+          result.success = true;
         } else {
-          let rcontrol_basic = execute_service_basic_control_field(service_type_value, service_data)
+          let rcontrol_basic = execute_service_basic_control_field(
+            service_type_value,
+            service_data
+          );
 
           if (rcontrol_basic.success) {
-            result.success = true
+            result.success = true;
           } else {
-            error = rcontrol_basic.message
+            error = rcontrol_basic.message;
           }
         }
       } else {
-        error = "service_type is not valid or not implemented"
+        error = "service_type is not valid or not implemented";
       }
     } else {
-      error = "service_data must be an object"
+      error = "service_data must be an object";
     }
   } catch (err) {
-    error = "big error when controlling service data : " + err.toString()
+    error = "big error when controlling service data : " + err.toString();
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const execute_service_basic_control_field = ((service_type_value, service_data) => {
+const execute_service_basic_control_field = (
+  service_type_value,
+  service_data
+) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
   try {
-    let data_fields = Object.keys(service_data)
-    let data_values = Object.values(service_data)
+    let data_fields = Object.keys(service_data);
+    let data_values = Object.values(service_data);
 
-    let authorized_fields = SERVICE_TYPES_FIELDS[service_type_value].fields
-    let authorized_types = SERVICE_TYPES_FIELDS[service_type_value].types
+    let authorized_fields = SERVICE_TYPES_FIELDS[service_type_value].fields;
+    let authorized_types = SERVICE_TYPES_FIELDS[service_type_value].types;
 
-    let present_fields = data_fields.filter(field => authorized_fields.includes(field))
-    let present_types = present_fields.map(field => authorized_types[authorized_fields.indexOf(field)])
+    let present_fields = data_fields.filter((field) =>
+      authorized_fields.includes(field)
+    );
+    let present_types = present_fields.map(
+      (field) => authorized_types[authorized_fields.indexOf(field)]
+    );
 
-    let required_fields = SERVICE_TYPES_FIELDS[service_type_value].required
+    let required_fields = SERVICE_TYPES_FIELDS[service_type_value].required;
     // let required_types = required_fields.map(field => authorized_types[authorized_fields.indexOf(field)])
     // verify if each element of required_fields is in data_fields
-    if (required_fields.every(field => data_fields.includes(field))) {
-      let rcontrol_fields_type = control_fields_type(present_fields, present_types, data_fields, data_values)
+    if (required_fields.every((field) => data_fields.includes(field))) {
+      let rcontrol_fields_type = control_fields_type(
+        present_fields,
+        present_types,
+        data_fields,
+        data_values
+      );
 
       if (rcontrol_fields_type.success) {
-        result.success = true
+        result.success = true;
       } else {
-        error = rcontrol_fields_type.message
+        error = rcontrol_fields_type.message;
       }
     } else {
-      error = "the authorized fields for service_type " + service_type_value + " are : " + authorized_fields.join(", ")
+      error =
+        "the authorized fields for service_type " +
+        service_type_value +
+        " are : " +
+        authorized_fields.join(", ");
     }
   } catch (err) {
-    error = "big error while executing service basic control field : " + err.toString()
+    error =
+      "big error while executing service basic control field : " +
+      err.toString();
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const control_fields_type = ((rfields, rtypes, dfields, dvalues) => {
+const control_fields_type = (rfields, rtypes, dfields, dvalues) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  result.success = true
+  result.success = true;
 
   for (let i = 0; i < rfields.length; i++) {
     const field = rfields[i];
     const ftype = rtypes[i];
-    const index = dfields.indexOf(field)
+    const index = dfields.indexOf(field);
     if (index != -1) {
       const value = dvalues[index];
-      let rcontrol_field_type = control_field_type(field, value, ftype)
+      let rcontrol_field_type = control_field_type(field, value, ftype);
       if (!rcontrol_field_type.success) {
-        error = rcontrol_field_type.message
-        result.success = false
+        error = rcontrol_field_type.message;
+        result.success = false;
         break;
       }
     } else {
-      error = "the field " + field + " is required"
-      result.success = false
+      error = "the field " + field + " is required";
+      result.success = false;
       break;
     }
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const control_field_type = ((field, value, field_type) => {
+const control_field_type = (field, value, field_type) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
   switch (field_type) {
     case "string":
       if (isString(value) && value != "") {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be a string"
+        error = "the field " + field + " must be a string";
       }
       break;
     case "string_not_empty":
       if (isString(value) && value != "") {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be a string and not empty"
+        error = "the field " + field + " must be a string and not empty";
       }
       break;
     case "string_email":
       if (isString(value) && value != "") {
         if (validator.validate(value)) {
-          result.success = true
+          result.success = true;
         } else {
-          error = "the field " + field + " must be a string email"
+          error = "the field " + field + " must be a string email";
         }
       } else {
-        error = "the field " + field + " must be a string and not empty"
+        error = "the field " + field + " must be a string and not empty";
       }
       break;
     case "string_date":
       if (isString(value) && value != "") {
-        if (moment(value, "YYYY-MM-DD HH:mm:ss").isValid() || moment(value, "YYYY-MM-DD").isValid()) {
-          result.success = true
+        if (
+          moment(value, "YYYY-MM-DD HH:mm:ss").isValid() ||
+          moment(value, "YYYY-MM-DD").isValid()
+        ) {
+          result.success = true;
         }
       }
       if (!result.success) {
-        error = "the field " + field + " must be a string date"
+        error = "the field " + field + " must be a string date";
       }
       break;
     case "string_boolean":
       if (isString(value) && value != "") {
         if (value == "true" || value == "false") {
-          result.success = true
+          result.success = true;
         }
       }
       if (!result.success) {
-        error = "the field " + field + " must be a string boolean"
+        error = "the field " + field + " must be a string boolean";
       }
       break;
     case "string_integer":
       if (isString(value) && value != "") {
         if (isInteger(parseInt(value))) {
-          result.success = true
+          result.success = true;
         }
       }
       if (!result.success) {
-        error = "the field " + field + " must be a string integer"
+        error = "the field " + field + " must be a string integer";
       }
       break;
     case "integer":
       if (isInteger(value)) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be an integer"
+        error = "the field " + field + " must be an integer";
       }
       break;
     case "boolean":
       if (isBoolean(value)) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be a boolean"
+        error = "the field " + field + " must be a boolean";
       }
       break;
     case "object":
       if (isObject(value)) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be an object"
+        error = "the field " + field + " must be an object";
       }
       break;
     case "array":
       if (isArray(value)) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be an array"
+        error = "the field " + field + " must be an array";
       }
       break;
     case "number":
       if (isNumber(value)) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be a number"
+        error = "the field " + field + " must be a number";
       }
       break;
     case "array_of_string":
       if (isString(value)) {
-        value = [value]
+        value = [value];
       }
       if (isArrayOfString(value)) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be an array of string"
+        error = "the field " + field + " must be an array of string";
       }
       break;
     case "array_of_integer":
       if (isInteger(value)) {
-        value = [value]
+        value = [value];
       }
       if (isArrayOfInteger(value)) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "the field " + field + " must be an array of integer"
+        error = "the field " + field + " must be an array of integer";
       }
       break;
     case "array_of_string_integer":
       if (isArrayOfString(value)) {
-        if (value.every(element => isInteger(parseInt(element)))) {
-          result.success = true
+        if (value.every((element) => isInteger(parseInt(element)))) {
+          result.success = true;
         }
       }
       if (!result.success) {
-        error = "the field " + field + " must be an array of string integer"
+        error = "the field " + field + " must be an array of string integer";
       }
       break;
     case "undefined":
-      result.success = true
+      result.success = true;
       break;
     default:
-      error = "the field " + field + " has an unknown type"
+      error = "the field " + field + " has an unknown type";
       break;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const generate_qr_code = (async (data) => {
+const generate_qr_code = async (data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = QRGENERATOR_URL + ROUTE_OF_QRGENERATOR_TO_GENERATE
+  let urlcomplete = QRGENERATOR_URL + ROUTE_OF_QRGENERATOR_TO_GENERATE;
 
   try {
-    let response = await axios.post(urlcomplete, data)
+    let response = await axios.post(urlcomplete, data);
     console.log(response.data);
     if (response.status == 200 && response.data.status == "success") {
-      let rdata = response.data
-      result.success = true
-      result.link = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.link = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const convertImageToPdf = (async (imagePath, pdfPath) => {
+const convertImageToPdf = async (imagePath, pdfPath) => {
   // Read the image file asynchronously.
   const image = await fs.promises.readFile(imagePath);
 
@@ -341,41 +401,48 @@ const convertImageToPdf = (async (imagePath, pdfPath) => {
   await fs.promises.writeFile(pdfPath, pdfBytes);
   // remove the image file
   await fs.promises.unlink(imagePath);
-});
+};
 
-const add_qr_code_to_pdf = (async (pdfPath, qrCodeBuffer, qrCodeText, outputPath) => {
+const add_qr_code_to_pdf = async (
+  pdfPath,
+  qrCodeBuffer,
+  qrCodeText,
+  outputPath
+) => {
   // Charger le PDF
-  
-})
+};
 
 const upload_file_to_server = async (file) => {
   let result = {
     success: false,
-    message: ""
+    message: "",
   };
 
   const urlComplete = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_UPLOAD;
   const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
 
   const formData = new FormData();
-  formData.append('file', file.buffer, { filename: file.originalname, contentType: 'application/pdf' });
-  formData.append('applicationUuid', APP_SERVER_FICHIER_APP_UID);
-  formData.append('name', file.originalname);
-  formData.append('description', "document");
+  formData.append("file", file.buffer, {
+    filename: file.originalname,
+    contentType: "application/pdf",
+  });
+  formData.append("applicationUuid", APP_SERVER_FICHIER_APP_UID);
+  formData.append("name", file.originalname);
+  formData.append("description", "document");
 
   try {
     const responseLogin = await axios.post(urlLogin, {
       username: APP_SERVER_FICHIER_LOGIN_USERNAME,
-      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD,
     });
 
     if (responseLogin.status === 201) {
       const token = responseLogin.data.data.jwt;
       const config = {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          ...formData.getHeaders() // Assurez-vous que formData est une instance du module 'form-data'
-        }
+          Authorization: `Bearer ${token}`,
+          ...formData.getHeaders(), // Assurez-vous que formData est une instance du module 'form-data'
+        },
       };
 
       try {
@@ -404,30 +471,33 @@ const upload_file_to_server = async (file) => {
 const auth_file_to_server = async (file, documentCode) => {
   let result = {
     success: false,
-    message: ""
+    message: "",
   };
 
-  const urlComplete = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_VERIFY_DOC;
+  const urlComplete =
+    APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_VERIFY_DOC;
   const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
 
   const formData = new FormData();
-  formData.append('file', file.buffer, { filename: file.originalname, contentType: 'application/pdf' });
-  formData.append('documentCode', documentCode);
-
+  formData.append("file", file.buffer, {
+    filename: file.originalname,
+    contentType: "application/pdf",
+  });
+  formData.append("documentCode", documentCode);
 
   try {
     const responseLogin = await axios.post(urlLogin, {
       username: APP_SERVER_FICHIER_LOGIN_USERNAME,
-      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD,
     });
 
     if (responseLogin.status === 201) {
       const token = responseLogin.data.data.jwt;
       const config = {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          ...formData.getHeaders() // Assurez-vous que formData est une instance du module 'form-data'
-        }
+          Authorization: `Bearer ${token}`,
+          ...formData.getHeaders(), // Assurez-vous que formData est une instance du module 'form-data'
+        },
       };
 
       try {
@@ -453,182 +523,188 @@ const auth_file_to_server = async (file, documentCode) => {
   return result;
 };
 
-
-
-const directus_retrieve_user = (async (username) => {
+const directus_retrieve_user = async (username) => {
   let result = {
-    success: false
-  }
-  let error = ""
+    success: false,
+  };
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?filter[username][_eq]=" + username
-  urlcomplete += "&fields[]=*,aps_town_all.*,aps_profile.*"
+  let urlcomplete =
+    urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?filter[username][_eq]=" + username;
+  urlcomplete += "&fields[]=*,aps_town_all.*,aps_profile.*";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
+      let rdata = response.data;
       if (rdata.data.length == 1) {
-        result.success = true
-        result.data = rdata.data[0]
+        result.success = true;
+        result.data = rdata.data[0];
       } else {
-        error = "L'utilisateur n'existe pas"
+        error = "L'utilisateur n'existe pas";
       }
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_update_user = (async (user_data) => {
+const directus_update_user = async (user_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "/" + user_data.id
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "/" + user_data.id;
   try {
     let response = await axios.patch(urlcomplete, {
       phone: user_data.phone,
       firstname: user_data.firstname,
       lastname: user_data.lastname,
-      email: user_data.email
-    })
+      email: user_data.email,
+    });
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
     console.log(err.response.data);
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_update_user_password = (async (user_data) => {
+const directus_update_user_password = async (user_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "/" + user_data.id
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "/" + user_data.id;
   try {
     let response = await axios.patch(urlcomplete, {
-      password: user_data.password
-    })
+      password: user_data.password,
+    });
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_create_connection_history = (async (user_data) => {
+const directus_create_connection_history = async (user_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_CONNECTION_HISTORY;
 
   try {
     let response = await axios.post(urlcomplete, {
       user: user_data.id,
-      login_at: moment().format("YYYY-MM-DD HH:mm:ss")
-    })
+      login_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+    });
 
-    if (response.status == 200 || response.status == 201 || response.status == 204) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+    if (
+      response.status == 200 ||
+      response.status == 201 ||
+      response.status == 204
+    ) {
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_verify_hash = (async (password, hash) => {
+const directus_verify_hash = async (password, hash) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_TO_VERIFY_HASH
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_TO_VERIFY_HASH;
   try {
     let response = await axios.post(urlcomplete, {
       string: password,
-      hash: hash
-    })
+      hash: hash,
+    });
     if (response.status == 200) {
-      let rdata = response.data
+      let rdata = response.data;
       if (rdata.data) {
-        result.success = true
+        result.success = true;
       } else {
-        error = "Le mot de passe est incorrect"
+        error = "Le mot de passe est incorrect";
       }
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
-
+  return result;
+};
 
 const directus_list_documents = async (filters) => {
   let result = {
     success: false,
-    data: []
+    data: [],
   };
 
   let error = "";
   const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
-  const urlgetDocFromAppServerByCode = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE;
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[status][_eq]=true";
+  const urlgetDocFromAppServerByCode =
+    APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE;
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT +
+    "?sort=-id&filter[status][_eq]=true";
   if (filters.user) {
     urlcomplete += "&filter[user][_eq]=" + filters.user;
   }
@@ -637,7 +713,11 @@ const directus_list_documents = async (filters) => {
   }
 
   if (filters.show_user) {
-    urlcomplete += "&fields[]=*,user.*" ;
+    urlcomplete += "&fields[]=*,user.*";
+  }
+
+  if (filters.show_folder) {
+    urlcomplete += "&fields[]=*,folder.*";
   }
 
   console.log("urlcomplete", urlcomplete);
@@ -645,20 +725,20 @@ const directus_list_documents = async (filters) => {
   try {
     const responseLogin = await axios.post(urlLogin, {
       username: APP_SERVER_FICHIER_LOGIN_USERNAME,
-      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD,
     });
 
     if (responseLogin.status === 201) {
       const token = responseLogin.data.data.jwt;
       const config = {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       };
 
       const response = await axios.get(urlcomplete);
       if (response.status === 200) {
         let documents = response.data.data;
         console.log("documents.length", documents.length);
-        
+
         for (let i = 0; i < documents.length; i++) {
           let doc = documents[i];
           let code = doc.code;
@@ -676,7 +756,12 @@ const directus_list_documents = async (filters) => {
               documents[i].output_url = responseDoc.data.data.secureObjectUrl;
             }
           } catch (err) {
-            console.log("error retrieving document path for", code, ":", err.message);
+            console.log(
+              "error retrieving document path for",
+              code,
+              ":",
+              err.message
+            );
           }
         }
 
@@ -698,39 +783,80 @@ const directus_list_documents = async (filters) => {
   }
 
   return result;
-}
+};
 
-
-const directus_list_documents_by_folder = (async (folder_id) => {
+const minayo_get_doc_by_code = async (code) => {
   let result = {
-    success: false
-  }
+    success: false,
+    data: [],
+  };
 
-  let error = ""
-
-  const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
-  const urlgetDocFromAppServerByCode = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE;
-
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id&filter[folder][_eq]=" + folder_id
-  urlcomplete += "&fields[]=*,user.*"
+  const urlLogin = `${APP_SERVER_FICHIER_URL}${APP_SERVER_FICHIER_ROUTE_LOGIN}`;
+  const urlgetDocFromAppServerByCode =
+  APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE;
 
   try {
-
     const responseLogin = await axios.post(urlLogin, {
       username: APP_SERVER_FICHIER_LOGIN_USERNAME,
-      password: APP_SERVER_FICHIER_LOGIN_PASSWORD
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD,
+    });
+
+    if (responseLogin.status === 201) {
+      const token = responseLogin.data.data.jwt;
+      const config = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      let url = `${urlgetDocFromAppServerByCode}${code}`;
+      let responseDoc = await axios.get(url, config);
+
+      result.success = true;
+      result.data = responseDoc.data.data;
+      console.log("documents", result.data);
+    } else {
+      throw new Error("Failed to login or obtain token.");
+    }
+  } catch (err) {
+    result.message = err.message || "An error occurred during the API call.";
+  }
+
+  return result;
+};
+
+const directus_list_documents_by_folder = async (folder_id) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  const urlLogin = APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_LOGIN;
+  const urlgetDocFromAppServerByCode =
+    APP_SERVER_FICHIER_URL + APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE;
+
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT +
+    "?sort=-id&filter[folder][_eq]=" +
+    folder_id;
+  urlcomplete += "&fields[]=*,user.*";
+
+  try {
+    const responseLogin = await axios.post(urlLogin, {
+      username: APP_SERVER_FICHIER_LOGIN_USERNAME,
+      password: APP_SERVER_FICHIER_LOGIN_PASSWORD,
     });
     if (responseLogin.status === 201) {
       const token = responseLogin.data.data.jwt;
       const config = {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       };
 
       const response = await axios.get(urlcomplete);
       if (response.status === 200) {
         let documents = response.data.data;
         console.log("documents.length", documents.length);
-        
+
         for (let i = 0; i < documents.length; i++) {
           let doc = documents[i];
           let code = doc.code;
@@ -748,7 +874,12 @@ const directus_list_documents_by_folder = (async (folder_id) => {
               documents[i].output_url = responseDoc.data.data.secureObjectUrl;
             }
           } catch (err) {
-            console.log("error retrieving document path for", code, ":", err.message);
+            console.log(
+              "error retrieving document path for",
+              code,
+              ":",
+              err.message
+            );
           }
         }
 
@@ -760,223 +891,242 @@ const directus_list_documents_by_folder = (async (folder_id) => {
       }
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_retrieve_document = (async (document_code) => {
+const directus_retrieve_document = async (document_code) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?limit=1&filter[code][_eq]=" + document_code
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT +
+    "?limit=1&filter[code][_eq]=" +
+    document_code;
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_create_document = (async (document_data) => {
+const directus_create_document = async (document_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT;
   try {
-    let response = await axios.post(urlcomplete, document_data)
-    if (response.status == 200 || response.status == 201 || response.status == 204) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+    let response = await axios.post(urlcomplete, document_data);
+    if (
+      response.status == 200 ||
+      response.status == 201 ||
+      response.status == 204
+    ) {
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_list_profiles = (async (filters) => {
+const directus_list_profiles = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_PROFILE + "?sort=-id"
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_PROFILE + "?sort=-id";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_list_projects = (async (filters) => {
+const directus_list_projects = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_PROJECT + "?sort=-id"
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_PROJECT + "?sort=-id";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-
-const directus_list_intermeds = (async (filters) => {
+const directus_list_intermeds = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?sort=-id&fields[]=*,aps_profile.*,aps_project.*&filter[profile][_eq]=" + USERPROFILE_TYPE_INTERMED
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_USER +
+    "?sort=-id&fields[]=*,aps_profile.*,aps_project.*&filter[profile][_eq]=" +
+    USERPROFILE_TYPE_INTERMED;
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_create_intermed = (async (intermed_data) => {
+const directus_create_intermed = async (intermed_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER;
   try {
-    intermed_data.code = genUserCode()
-    intermed_data.username = intermed_data.email
-    intermed_data.password = "12341234"
-    intermed_data.profile = USERPROFILE_TYPE_INTERMED
-    intermed_data.status = true
-    let response = await axios.post(urlcomplete, intermed_data)
-    if (response.status == 200 || response.status == 201 || response.status == 204) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+    intermed_data.code = genUserCode();
+    intermed_data.username = intermed_data.email;
+    intermed_data.password = "12341234";
+    intermed_data.profile = USERPROFILE_TYPE_INTERMED;
+    intermed_data.status = true;
+    let response = await axios.post(urlcomplete, intermed_data);
+    if (
+      response.status == 200 ||
+      response.status == 201 ||
+      response.status == 204
+    ) {
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.response.data ? err.response.data.errors[0].message : err.message
+    error = err.response.data
+      ? err.response.data.errors[0].message
+      : err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-
-
-const directus_list_clients = (async (filters) => {
+const directus_list_clients = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?sort=-id&filter[profile][_eq]=" + USERPROFILE_TYPE_CLIENT
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_USER +
+    "?sort=-id&filter[profile][_eq]=" +
+    USERPROFILE_TYPE_CLIENT;
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
 async function directus_create_client(client_data) {
   let result = {
-    success: false
+    success: false,
   };
   let error = "";
   let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER;
@@ -989,14 +1139,21 @@ async function directus_create_client(client_data) {
     client_data.status = true;
     let response = await axios.post(urlcomplete, client_data);
 
-    if (response.status === 200 || response.status === 201 || response.status === 204) {
+    if (
+      response.status === 200 ||
+      response.status === 201 ||
+      response.status === 204
+    ) {
       result.success = true;
       result.data = response.data.data;
     } else {
       error = response.data.message;
     }
   } catch (err) {
-    error = err.response && err.response.data ? err.response.data.errors[0].message : err.message;
+    error =
+      err.response && err.response.data
+        ? err.response.data.errors[0].message
+        : err.message;
   }
 
   if (error !== "") {
@@ -1006,356 +1163,397 @@ async function directus_create_client(client_data) {
   return result;
 }
 
-const directus_list_agents = (async (filters) => {
+const directus_list_agents = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER + "?sort=-id&filter[profile][_eq]=" + USERPROFILE_TYPE_AGENT
-  urlcomplete += "&fields[]=*,aps_town_hall.*"
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_USER +
+    "?sort=-id&filter[profile][_eq]=" +
+    USERPROFILE_TYPE_AGENT;
+  urlcomplete += "&fields[]=*,aps_town_hall.*";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_create_agent = (async (agent_data) => {
+const directus_create_agent = async (agent_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_USER;
   try {
-    agent_data.code = genUserCode()
-    agent_data.username = agent_data.email
-    agent_data.password = "12341234"
-    agent_data.profile = USERPROFILE_TYPE_AGENT
-    agent_data.status = true
-    agent_data.aps_town_hall = agent_data.town_hall
-    let response = await axios.post(urlcomplete, agent_data)
-    if (response.status == 200 || response.status == 201 || response.status == 204) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+    agent_data.code = genUserCode();
+    agent_data.username = agent_data.email;
+    agent_data.password = "12341234";
+    agent_data.profile = USERPROFILE_TYPE_AGENT;
+    agent_data.status = true;
+    agent_data.aps_town_hall = agent_data.town_hall;
+    let response = await axios.post(urlcomplete, agent_data);
+    if (
+      response.status == 200 ||
+      response.status == 201 ||
+      response.status == 204
+    ) {
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.response.data ? err.response.data.errors[0].message : err.message
+    error = err.response.data
+      ? err.response.data.errors[0].message
+      : err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_retrieve_folder = (async (folder_id) => {
+const directus_retrieve_folder = async (folder_id) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?limit=1&filter[id][_eq]=" + folder_id
-  urlcomplete += "&fields[]=*,project.*,owner.*"
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_APS_FOLDER +
+    "?limit=1&filter[id][_eq]=" +
+    folder_id;
+  urlcomplete += "&fields[]=*,project.*,owner.*";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_list_folders = (async (filters) => {
+const directus_list_folders = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?sort=-id"
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?sort=-id";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-
-const directus_list_intermed_folders = (async (filters) => {
+const directus_list_intermed_folders = async (filters) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
   console.log(filters);
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR + "?sort=-id"
+  let urlcomplete =
+    urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR + "?sort=-id";
 
   if (filters.actor) {
-    urlcomplete += "&filter[actor][_eq]=" + filters.actor
+    urlcomplete += "&filter[actor][_eq]=" + filters.actor;
   }
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
+      let rdata = response.data;
 
       console.log(rdata);
 
-      let folders = []
-      const folder_ids = rdata.data.map(folder_actor => folder_actor.folder)
-      urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?sort=-id&filter[id][_in]=" + folder_ids.join(",")
-      urlcomplete += "&fields[]=*,project.*,owner.*"
-      let response_folders = await axios.get(urlcomplete)
+      let folders = [];
+      const folder_ids = rdata.data.map((folder_actor) => folder_actor.folder);
+      urlcomplete =
+        urlapi +
+        ROUTE_OF_DIRECTUS_FOR_APS_FOLDER +
+        "?sort=-id&filter[id][_in]=" +
+        folder_ids.join(",");
+      urlcomplete += "&fields[]=*,project.*,owner.*";
+      let response_folders = await axios.get(urlcomplete);
       if (response_folders.status == 200) {
-        let rdata_folders = response_folders.data
-        folders = rdata_folders.data
+        let rdata_folders = response_folders.data;
+        folders = rdata_folders.data;
 
-        result.success = true
-        result.data = rdata.data.map(folder_actor => {
-          let folder = folders.find(f => f.id == folder_actor.folder)
-          return folder
-        })
+        result.success = true;
+        result.data = rdata.data.map((folder_actor) => {
+          let folder = folders.find((f) => f.id == folder_actor.folder);
+          return folder;
+        });
       } else {
-        error = response_folders.data.message
+        error = response_folders.data.message;
       }
-
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_search_folder = (async (folder_code) => {
+const directus_search_folder = async (folder_code) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?limit=1&filter[short_code][_contains]=" + folder_code
-  urlcomplete += "&fields[]=*,project.*,owner.*"
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_APS_FOLDER +
+    "?limit=1&filter[short_code][_contains]=" +
+    folder_code;
+  urlcomplete += "&fields[]=*,project.*,owner.*";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_create_folder_actor = (async (folder_actor_data) => {
+const directus_create_folder_actor = async (folder_actor_data) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR;
   try {
-    let response = await axios.post(urlcomplete, folder_actor_data)
-    if (response.status == 200 || response.status == 201 || response.status == 204) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+    let response = await axios.post(urlcomplete, folder_actor_data);
+    if (
+      response.status == 200 ||
+      response.status == 201 ||
+      response.status == 204
+    ) {
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.response.data ? err.response.data.errors[0].message : err.message
+    error = err.response.data
+      ? err.response.data.errors[0].message
+      : err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_filter_folder_actor = (async (actor, folder_ids) => {
+const directus_filter_folder_actor = async (actor, folder_ids) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR + "?sort=-id&filter[folder][_in]=" + folder_ids.join(",")
-  urlcomplete += "&filter[actor][_eq]=" + actor
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR +
+    "?sort=-id&filter[folder][_in]=" +
+    folder_ids.join(",");
+  urlcomplete += "&filter[actor][_eq]=" + actor;
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_list_town_hall = (async () => {
+const directus_list_town_hall = async () => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_TOWN_HALL + "?sort=-id&filter[status][_eq]=true"
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_TOWN_HALL +
+    "?sort=-id&filter[status][_eq]=true";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
-      result.data = rdata.data
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
     console.log(err);
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_list_town_hall_document_types = (async () => {
+const directus_list_town_hall_document_types = async () => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE + "?sort=id&filter[status][_eq]=true"
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE +
+    "?sort=id&filter[status][_eq]=true";
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
-      result.success = true
+      let rdata = response.data;
+      result.success = true;
       // result.data = rdata.data.map(town_hall => town_hall.document_types)
-      result.data = rdata.data
+      result.data = rdata.data;
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
     console.log(err);
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
-const directus_retrieve_town_hall_document_type = (async (document_type_id) => {
+const directus_retrieve_town_hall_document_type = async (document_type_id) => {
   let result = {
-    success: false
-  }
+    success: false,
+  };
 
-  let error = ""
+  let error = "";
 
-  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE + "?limit=1&filter[id][_eq]=" + document_type_id
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE +
+    "?limit=1&filter[id][_eq]=" +
+    document_type_id;
   try {
-    let response = await axios.get(urlcomplete)
+    let response = await axios.get(urlcomplete);
     if (response.status == 200) {
-      let rdata = response.data
+      let rdata = response.data;
       if (rdata.data.length == 1) {
-        result.success = true
-        result.data = rdata.data[0]
+        result.success = true;
+        result.data = rdata.data[0];
       } else {
-        error = "Le type de document n'existe pas"
+        error = "Le type de document n'existe pas";
       }
     } else {
-      error = response.data.message
+      error = response.data.message;
     }
   } catch (err) {
     console.log(err);
-    error = err.message
+    error = err.message;
   }
 
   if (error != "") {
-    result.message = error
+    result.message = error;
   }
 
-  return result
-})
+  return result;
+};
 
 module.exports = {
   control_service_data,
@@ -1389,5 +1587,6 @@ module.exports = {
   directus_list_town_hall_document_types,
   directus_retrieve_town_hall_document_type,
   upload_file_to_server,
-  auth_file_to_server
-}
+  auth_file_to_server,
+  minayo_get_doc_by_code
+};

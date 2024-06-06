@@ -1,25 +1,23 @@
 <% extend('./base_intermed') %>
 
-  <div class="row">
-    <% for( let index = 0; index < 4; index++ ) { %>
-      <div class="col-md-6 mb-3">
-        <div class="card border-primary card-hover">
-          <div class="card-body">
-            <p class="card-title fs-4">
-              Title
-              <span class="float-end">
-                <i class="bx bxs-user-detail fs-4 opacity-60 me-2"></i>
-              </span>
-            </p>
-            <p class="card-text fs-2">
-              Value
-              <span class="float-end">
-                <a href="#" class="btn btn-sm btn-primary">Go somewhere</a>
-              </span>
-            </p>
-            
-          </div>
+<div class="row mb-3">
+  <% for(dd of dashboard_data) { %>
+    <div class="col-md-<%= dd.mdcard %> mb-3">
+      <div class="card border-primary card-hover">
+        <div class="card-body">
+          <p class="card-title fs-4">
+            <%= dd.label %>
+            <span class="float-end">
+              <i class="bx bxs-user-detail fs-4 opacity-60 me-2"></i>
+            </span>
+          </p>
+          <p class="card-text fs-2">
+            <%= dd.value %>
+          </p>
         </div>
       </div>
-    <% } %>
-  </div>
+    </div>
+  <% } %>
+</div>
+<hr>
+<br>

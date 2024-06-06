@@ -44,7 +44,7 @@
       </div>
     <% } %>
 
-    <div class="row pb-2">
+    <!-- <div class="row pb-2">
       <div class="col-sm-12 mb-4">
         <label for="fn" class="form-label fs-base">
           <span class="text-danger">*</span>
@@ -57,6 +57,26 @@
         <div class="invalid-feedback">
           S'il vous plaît entrez votre titre!
         </div>
+      </div>
+    </div> -->
+
+    <div class="row pd-2">
+      <div class="col-sm-12 mb-4">
+        <label for="folder" class="form-label fs-base">
+          <span class="text-danger">*</span>
+          Type de document
+        </label>
+        <select name="title" id="id_document_type" class="form-select form-select-lg" required>
+          <option value="">
+            Sélectionnez un type de document
+          </option>
+          <% for (d_t of document_types) { %>
+            <option value="<%= d_t.label %>">
+              <%= d_t.label %>
+            </option> 
+  
+          <% } %>
+        </select>
       </div>
     </div>
   
@@ -71,9 +91,15 @@
             Sélectionnez un folder
           </option>
           <% for (f of folders) { %>
+            <% if (locals.folder_code && f.code == folder_code) { %>
+              <option value="<%= f.id %>" selected>
+                <%= f.project.label %> - <%= f.short_code %>
+              </option>
+            <% } else { %>
             <option value="<%= f.id %>">
               <%= f.project.label %> - <%= f.short_code %>
             </option>
+            <% } %>
           <% } %>
         </select>
       </div>

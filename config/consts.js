@@ -92,6 +92,8 @@ class Consts {
     static ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR="/items/aps_folder_actor"
     static ROUTE_OF_DIRECTUS_FOR_TOWN_HALL="/items/aps_town_hall"
     static ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE="/items/aps_town_hall_document_type"
+    static ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT_TYPE="/items/aps_document_type"
+    
 
 
 

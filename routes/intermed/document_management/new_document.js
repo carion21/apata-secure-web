@@ -4,7 +4,7 @@ const axios = require('axios');
 const { getMoment, getTabSideBase, getRouteDeBase, getDirectusUrl, isInteger, genDocumentCode } = require('../../../config/utils');
 const { DEFAULT_PROFILE_INTERMED, APP_NAME, APP_VERSION, APP_DESCRIPTION, NLIMIT } = require('../../../config/consts');
 const { activeSidebare, getIndice } = require('../../../config/sidebare');
-const { upload_file_to_server, directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf, directus_list_intermed_folders, control_service_data } = require('../../../config/global_functions');
+const { upload_file_to_server, directus_list_documents, directus_count_documents, directus_retrieve_user, directus_create_document, generate_qr_code, add_qr_code_to_pdf, directus_list_intermed_folders, control_service_data, directus_list_document_types } = require('../../../config/global_functions');
 const router = express.Router();
 
 const urlapi = getDirectusUrl();
@@ -41,6 +41,13 @@ router.get('/', async function (req, res, next) {
     folders = r_dts_folders.data
   }
 
+  let document_types = []
+  let r_dts_document_types = await directus_list_document_types(req.session.userdata.aps_profile.id)
+  if (r_dts_document_types.success) {
+    document_types = r_dts_document_types.data
+  }
+  console.log("document_types", document_types)
+
   res.render(
     profile + "/document_management/new_document", {
     appName: APP_NAME,
@@ -55,7 +62,54 @@ router.get('/', async function (req, res, next) {
     tabside: tabside,
     userdata: req.session.userdata,
     moment: moment,
-    folders: folders
+    folders: folders,
+    document_types: document_types
+  })
+});
+
+router.get('/:folder_code', async function (req, res, next) {
+  let filters = {
+    actor: req.session.userdata.id
+  }
+
+  let folders = []
+  let r_dts_folders = await directus_list_intermed_folders(filters)
+  if (r_dts_folders.success) {
+    folders = r_dts_folders.data
+  }
+  
+  // verify if folder_code exists
+  let folder_code = req.params.folder_code
+  let folder = folders.find(folder => folder.code == folder_code)
+  if (!folder) {
+    res.redirect(routedebase + "/document_management/new_document")
+  }
+
+  let document_types = []
+  let r_dts_document_types = await directus_list_document_types(req.session.userdata.aps_profile.id)
+  if (r_dts_document_types.success) {
+    document_types = r_dts_document_types.data
+  }
+
+
+  res.render(
+    profile + "/document_management/new_document", {
+    appName: APP_NAME,
+    appVersion: APP_VERSION,
+    appDescription: APP_DESCRIPTION,
+    profile: profile,
+    blocname: blocname,
+    pagename: pagename,
+    page: page,
+    template: template,
+    routedebase: routedebase,
+    tabside: tabside,
+    userdata: req.session.userdata,
+    moment: moment,
+    folders: folders,
+    folder_code: folder_code,
+    folder: folder,
+    document_types: document_types
   })
 });
 
@@ -74,7 +128,11 @@ router.post('/', upload.single('document'), async function (req, res, next) {
   if (r_dts_folders.success) {
     folders = r_dts_folders.data
   }
-
+  let document_types = []
+  let r_dts_document_types = await directus_list_document_types(req.session.userdata.aps_profile.id)
+  if (r_dts_document_types.success) {
+    document_types = r_dts_document_types.data
+  }
   let message = ""
   let error = ""
 
@@ -94,7 +152,6 @@ router.post('/', upload.single('document'), async function (req, res, next) {
       result.message = "Le document a été téléchargé avec succès.";
       console.log("Upload result:", uploadResult.data);
       // get buffer from qrcode link
-
 
       let doc_data = {
         code: uploadResult.data.code,
@@ -141,7 +198,8 @@ router.post('/', upload.single('document'), async function (req, res, next) {
       userdata: req.session.userdata,
       moment: moment,
       folders: folders,
-      error: error
+      error: error,
+      document_types: document_types
     })
   } else {
     let vfolder = folders.find(folder => folder.id == body.folder)
@@ -161,7 +219,8 @@ router.post('/', upload.single('document'), async function (req, res, next) {
       moment: moment,
       folders: folders,
       vfolder: vfolder,
-      message: message
+      message: message,
+      document_types: document_types
     })
   }
 });

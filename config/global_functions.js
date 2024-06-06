@@ -23,6 +23,7 @@ const {
   ROUTE_OF_DIRECTUS_FOR_TOWN_HALL,
   ROUTE_OF_DIRECTUS_FOR_TOWN_HALL_DOCUMENT_TYPE,
   APP_SERVER_FICHIER_ROUTE_DOWNLOAD_BY_CODE,
+  ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT_TYPE,
 } = require("./consts");
 const {
   isString,
@@ -720,7 +721,7 @@ const directus_list_documents = async (filters) => {
     urlcomplete += "&fields[]=*,folder.*";
   }
 
-  console.log("urlcomplete", urlcomplete);
+  
 
   try {
     const responseLogin = await axios.post(urlLogin, {
@@ -737,13 +738,13 @@ const directus_list_documents = async (filters) => {
       const response = await axios.get(urlcomplete);
       if (response.status === 200) {
         let documents = response.data.data;
-        console.log("documents.length", documents.length);
+       
 
         for (let i = 0; i < documents.length; i++) {
           let doc = documents[i];
           let code = doc.code;
           let url = urlgetDocFromAppServerByCode + code;
-          console.log("url", url);
+         
 
           try {
             let responseDoc = await axios.get(url, config);
@@ -751,7 +752,7 @@ const directus_list_documents = async (filters) => {
               // documents[i].input_path = responseDoc.data.data.baseObjectUrl;
               // documents[i].output_path = responseDoc.data.data.secureObjectUrl;
               //create two new attributes in the document object to store the input and output paths
-              console.log("responseDoc.data.data", responseDoc.data.data);
+         
               documents[i].input_url = responseDoc.data.data.baseObjectUrl;
               documents[i].output_url = responseDoc.data.data.secureObjectUrl;
             }
@@ -812,7 +813,7 @@ const minayo_get_doc_by_code = async (code) => {
 
       result.success = true;
       result.data = responseDoc.data.data;
-      console.log("documents", result.data);
+   
     } else {
       throw new Error("Failed to login or obtain token.");
     }
@@ -1316,8 +1317,6 @@ const directus_list_intermed_folders = async (filters) => {
     if (response.status == 200) {
       let rdata = response.data;
 
-      console.log(rdata);
-
       let folders = [];
       const folder_ids = rdata.data.map((folder_actor) => folder_actor.folder);
       urlcomplete =
@@ -1555,6 +1554,225 @@ const directus_retrieve_town_hall_document_type = async (document_type_id) => {
   return result;
 };
 
+const directus_count_clients = async (filters) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_USER +
+    "?sort=-id&filter[profile][_eq]=" +
+    USERPROFILE_TYPE_CLIENT;
+
+    urlcomplete += "&aggregate[count]=*";
+  try {
+    let response = await axios.get(urlcomplete);
+    if (response.status == 200) {
+      let rdata = response.data;
+      result.success = true;
+      result.count = rdata.data[0].count;
+    } else {
+      error = response.data.message;
+    }
+  } catch (err) {
+    error = err.message;
+  }
+
+  if (error != "") {
+    result.message = error;
+  }
+
+  return result;
+};
+
+const directus_count_intermeds = async (filters) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  let urlcomplete =
+    urlapi +
+    ROUTE_OF_DIRECTUS_FOR_USER +
+    "?sort=-id&filter[profile][_eq]=" +
+    USERPROFILE_TYPE_INTERMED;
+
+    urlcomplete += "&aggregate[count]=*";
+  try {
+    let response = await axios.get(urlcomplete);
+    if (response.status == 200) {
+      let rdata = response.data;
+      result.success = true;
+      result.count = rdata.data[0].count;
+    } else {
+      error = response.data.message;
+    }
+  } catch (err) {
+    error = err.message;
+  }
+
+  if (error != "") {
+    result.message = error;
+  }
+
+  return result;
+};
+
+const directus_count_folders = async (filters) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER + "?sort=-id";
+  urlcomplete += "&aggregate[count]=*";
+
+  try {
+    let response = await axios.get(urlcomplete);
+    if (response.status == 200) {
+      let rdata = response.data;
+      result.success = true;
+      result.count = rdata.data[0].count;
+    } else {
+      error = response.data.message;
+    }
+  } catch (err) {
+    error = err.message;
+  }
+
+  if (error != "") {
+    result.message = error;
+  }
+
+  return result;
+};
+
+const directus_count_documents = async (filters) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT + "?sort=-id";
+  urlcomplete += "&aggregate[count]=*";
+
+  try {
+    let response = await axios.get(urlcomplete);
+    if (response.status == 200) {
+      let rdata = response.data;
+      result.success = true;
+      result.count = rdata.data[0].count;
+    } else {
+      error = response.data.message;
+    }
+  } catch (err) {
+    error = err.message;
+  }
+
+  if (error != "") {
+    result.message = error;
+  }
+
+  return result;
+};
+
+const directus_count_intermed_folders = async (intermed_id) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_FOLDER_ACTOR 
+  urlcomplete += "?filter[actor][_eq]=" + intermed_id; 
+  urlcomplete += "&aggregate[count]=*";
+
+  try {
+    let response = await axios.get(urlcomplete);
+    if (response.status == 200) {
+      let rdata = response.data;
+      result.success = true;
+      result.count = rdata.data[0].count;
+    } else {
+      error = response.data.message;
+    }
+  } catch (err) {
+    error = err.message;
+  }
+
+  if (error != "") {
+    result.message = error;
+  }
+
+  return result;
+};
+
+const directus_count_intermed_documents = async (filters) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT
+  urlcomplete += "?filter[user][_eq]=" + filters.intermed_id;
+  urlcomplete += "&aggregate[count]=*";
+
+  try {
+    let response = await axios.get(urlcomplete);
+    if (response.status == 200) {
+      let rdata = response.data;
+      result.success = true;
+      result.count = rdata.data[0].count;
+    } else {
+      error = response.data.message;
+    }
+  } catch (err) {
+    error = err.message;
+  }
+
+  if (error != "") {
+    result.message = error;
+  }
+
+  return result;
+};
+
+
+const directus_list_document_types = async (aps_profile_id) => {
+  let result = {
+    success: false,
+  };
+
+  let error = "";
+
+  let urlcomplete = urlapi + ROUTE_OF_DIRECTUS_FOR_APS_DOCUMENT_TYPE + "?sort=-id";
+  urlcomplete += "&filter[aps_profile][_eq]=" + aps_profile_id;
+  try {
+    let response = await axios.get(urlcomplete);
+    if (response.status == 200) {
+      let rdata = response.data;
+      result.success = true;
+      result.data = rdata.data;
+    } else {
+      error = response.data.message;
+    }
+  } catch (err) {
+    error = err.message;
+  }
+
+  if (error != "") {
+    result.message = error;
+  }
+
+  return result;
+};
 module.exports = {
   control_service_data,
   convertImageToPdf,
@@ -1588,5 +1806,12 @@ module.exports = {
   directus_retrieve_town_hall_document_type,
   upload_file_to_server,
   auth_file_to_server,
-  minayo_get_doc_by_code
+  minayo_get_doc_by_code,
+  directus_count_clients,
+  directus_count_intermeds,
+  directus_count_folders,
+  directus_count_documents,
+  directus_count_intermed_folders,
+  directus_count_intermed_documents,
+  directus_list_document_types
 };

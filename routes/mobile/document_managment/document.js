@@ -138,9 +138,9 @@ const getDocumentByCodeFromServer = async (req,res,next) => {
 
 
 
-router.get('/code/:documentCode', getDocumentByCodeFromServer);
+router.get('/code/:documentCode', getDocumentByCode);
 router.get('/:folderId', getDocumentsOfFolder);
 router.get('/user/:userId', getDocumentsOfUser);                 
-// router.get('/doc/:documentCode', getDocumentByCodeFromServer);
+// router.get('/doc/:documentCode', getDocumentByCode);
 
 module.exports = router;

@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post('/', async function (req, res, next) {
     let body = req.body
-    console.log(body)
+    
     let user =  await directus_retrieve_user(body.email)
 
     try{
